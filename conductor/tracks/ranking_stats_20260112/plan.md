@@ -13,7 +13,7 @@
     - Write integration tests for end-of-match stats update.
 - [x] **Task: Conductor - User Manual Verification 'Backend ELO & Persistence' (Protocol in workflow.md)**
 
-## Phase 2: Client Profile & Visual Tiers (Flutter)
+## Phase 2: Client Profile & Visual Tiers (Flutter) [checkpoint: c42bf93]
 
 - [x] **Task 1: Implement User Models and Tier Logic** 77f449e
     - Create `UserProfile` model.
@@ -22,7 +22,7 @@
 - [x] **Task 2: Build Profile UI** fa4f21b
     - Create a Profile screen.
     - Design and implement visual tier badges.
-- [ ] **Task: Conductor - User Manual Verification 'Client Profile & Visual Tiers' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Client Profile & Visual Tiers' (Protocol in workflow.md)**
 
 ## Phase 3: Synchronization & Final Integration
 
