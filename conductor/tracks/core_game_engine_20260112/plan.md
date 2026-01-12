@@ -25,7 +25,7 @@ This plan outlines the steps to implement the core game engine and local multipl
 
 ## Phase 2: Flutter UI & State Management
 
-- [ ] **Task 1: Set up GameBloc for State Management**
+- [x] **Task 1: Set up GameBloc for State Management** 9c60e5f
     - Write tests for `GameBloc` events and state transitions.
     - Implement the Bloc to coordinate engine logic and UI.
 - [ ] **Task 2: Build Basic Board UI**
