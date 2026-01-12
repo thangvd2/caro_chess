@@ -8,6 +8,7 @@ import '../engine/game_engine.dart';
 import '../repositories/game_repository.dart';
 import '../ai/ai_service.dart';
 import '../services/web_socket_service.dart';
+import '../services/audio_service.dart';
 
 // Events
 abstract class GameEvent extends Equatable {
@@ -111,6 +112,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   final GameRepository _repository;
   final AIService _aiService;
   final WebSocketService _socketService;
+  final AudioService _audioService;
   StreamSubscription? _socketSubscription;
 
   GameEngine? _engine;
@@ -119,10 +121,11 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   Player? _myPlayer;
   UserProfile? _userProfile;
 
-  GameBloc({GameRepository? repository, AIService? aiService, WebSocketService? socketService}) 
+  GameBloc({GameRepository? repository, AIService? aiService, WebSocketService? socketService, AudioService? audioService}) 
       : _repository = repository ?? GameRepository(),
         _aiService = aiService ?? AIService(),
         _socketService = socketService ?? WebSocketService(),
+        _audioService = audioService ?? AudioService(),
         super(GameInitial()) {
     on<StartGame>(_onStartGame);
     on<LoadSavedGame>(_onLoadSavedGame);
@@ -171,7 +174,9 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       final pos = Position(x: msg['x'], y: msg['y']);
       if (_engine != null && _engine!.currentPlayer != _myPlayer) {
         _engine!.placePiece(pos);
+        _audioService.playMove();
         if (_engine!.isGameOver) {
+          _playWinLoseSound();
           emit(GameOver(board: _engine!.board, winner: _engine!.winner, rule: _engine!.rule));
         } else {
           emit(_buildInProgressState());
@@ -218,6 +223,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
 
     final success = _engine!.placePiece(event.position);
     if (success) {
+      _audioService.playMove();
       if (_mode == GameMode.online) {
         _socketService.send({
           'type': 'MOVE',
@@ -228,6 +234,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
 
       _saveState();
       if (_engine!.isGameOver) {
+        _playWinLoseSound();
         emit(GameOver(
           board: _engine!.board,
           winner: _engine!.winner,
@@ -279,6 +286,23 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   void _saveState() {
     if (_engine != null && _mode != GameMode.online) {
       _repository.saveGame(_engine!.rule, _engine!.history, mode: _mode, difficulty: _difficulty);
+    }
+  }
+  
+  void _playWinLoseSound() {
+    if (_engine!.winner == null) return; // Draw
+    
+    if (_mode == GameMode.localPvP) {
+      _audioService.playWin();
+    } else {
+      // vsAI: Player is X.
+      // Online: _myPlayer.
+      final isWin = _engine!.winner == (_myPlayer ?? Player.x);
+      if (isWin) {
+        _audioService.playWin();
+      } else {
+        _audioService.playLose();
+      }
     }
   }
 
