@@ -23,7 +23,7 @@ This plan outlines the steps to implement the core game engine and local multipl
     - Implement undo/redo logic.
 - [x] **Task: Conductor - User Manual Verification 'Game Engine Logic' (Protocol in workflow.md)**
 
-## Phase 2: Flutter UI & State Management
+## Phase 2: Flutter UI & State Management [checkpoint: ec4f06f]
 
 - [x] **Task 1: Set up GameBloc for State Management** 9c60e5f
     - Write tests for `GameBloc` events and state transitions.
@@ -35,7 +35,7 @@ This plan outlines the steps to implement the core game engine and local multipl
     - Build UI for turn indicator, reset button, and status messages.
 - [x] **Task 4: Implement Undo/Redo Controls** b3d3230
     - Add buttons to trigger undo/redo events.
-- [ ] **Task: Conductor - User Manual Verification 'Flutter UI & State Management' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Flutter UI & State Management' (Protocol in workflow.md)**
 
 ## Phase 3: Rule Variations & Guidelines
 
