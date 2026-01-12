@@ -1,0 +1,31 @@
+# Track Plan: Single Player AI Integration
+
+## Phase 1: AI Engine Logic (Pure Dart)
+
+- [x] **Task 1: Implement Move Generator** 1aa485f
+    - Create `MoveGenerator` class to find relevant moves.
+    - Write unit tests for pruning empty areas.
+- [ ] **Task 2: Implement Heuristic Evaluation**
+    - Create `EvaluationService` to score board patterns.
+    - Write unit tests for pattern recognition (e.g., scoring a "Open 3").
+- [ ] **Task 3: Implement Minimax with Alpha-Beta**
+    - Create `MinimaxSolver`.
+    - Write unit tests to verify it finds winning moves in simple scenarios.
+- [ ] **Task: Conductor - User Manual Verification 'AI Engine Logic' (Protocol in workflow.md)**
+
+## Phase 2: AI Service & Concurrency
+
+- [ ] **Task 1: Create AI Service with Isolate Support**
+    - Implement `AIService` that uses `compute()` to run the solver.
+    - Write integration tests to ensure it returns a move asynchronously.
+- [ ] **Task: Conductor - User Manual Verification 'AI Service & Concurrency' (Protocol in workflow.md)**
+
+## Phase 3: UI Integration
+
+- [ ] **Task 1: Update GameBloc for AI Turn**
+    - Add `AIMoveRequested` event and `GameAIThinking` state.
+    - Handle AI turn logic in Bloc.
+- [ ] **Task 2: Update Game Controls for Single Player**
+    - Add "Play vs AI" and Difficulty Selector to UI.
+    - Show thinking indicator.
+- [ ] **Task: Conductor - User Manual Verification 'UI Integration' (Protocol in workflow.md)**
