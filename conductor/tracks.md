@@ -1,1 +1,8 @@
-# Project Tracks\n\nThis file tracks all major tracks for the project. Each track has its own detailed plan in its respective folder.\n\n---\n\n## [~] Track: Core Game Engine & Local Play MVP\n*Link: [./conductor/tracks/core_game_engine_20260112/](./conductor/tracks/core_game_engine_20260112/)*
+# Project Tracks
+
+This file tracks all major tracks for the project. Each track has its own detailed plan in its respective folder.
+
+---
+
+## [~] Track: Single Player AI Integration
+*Link: [./conductor/tracks/single_player_ai_20260112/](./conductor/tracks/single_player_ai_20260112/)*

@@ -1,0 +1,8 @@
+{
+  "track_id": "single_player_ai_20260112",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-01-12T20:30:00Z",
+  "updated_at": "2026-01-12T20:30:00Z",
+  "description": "Implement a Minimax-based AI opponent with Alpha-Beta pruning, adjustable difficulty (Easy/Medium/Hard), and integrate it into the existing UI."
+}

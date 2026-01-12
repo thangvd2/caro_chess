@@ -13,6 +13,10 @@
 - **Library:** [Bloc (Business Logic Component)](https://pub.dev/packages/flutter_bloc)
 - **Rationale:** Bloc enforces a clear separation between game logic and the UI, making the complex states of a turn-based game (turns, win detection, AI processing) predictable, easy to test, and scalable.
 
+## Local Storage & Persistence
+- **Library:** [shared_preferences](https://pub.dev/packages/shared_preferences)
+- **Rationale:** Used to persist game state (move history and active rule set) locally on the device, allowing users to resume games after closing the app.
+
 ## Testing & Quality
 - **Framework:** [Flutter Test](https://docs.flutter.dev/cookbook/testing/unit/introduction) with [Mockito](https://pub.dev/packages/mockito)
 - **Strategy:** Prioritize unit tests for the game engine (win detection logic) and widget tests for core UI components.
