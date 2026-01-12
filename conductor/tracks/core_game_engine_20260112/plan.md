@@ -31,7 +31,7 @@ This plan outlines the steps to implement the core game engine and local multipl
 - [x] **Task 2: Build Basic Board UI** f49e7c3
     - Create `GameBoard` and `BoardCell` widgets.
     - Connect UI interactions to `GameBloc`.
-- [ ] **Task 3: Implement Game Info and Controls**
+- [x] **Task 3: Implement Game Info and Controls** ed46086
     - Build UI for turn indicator, reset button, and status messages.
 - [ ] **Task 4: Implement Undo/Redo Controls**
     - Add buttons to trigger undo/redo events.
