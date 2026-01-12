@@ -25,11 +25,11 @@
     - Handle socket events (`MATCH_FOUND`, `MOVE_MADE`).
 - [x] **Task: Conductor - User Manual Verification 'Flutter Client Networking' (Protocol in workflow.md)**
 
-## Phase 3: Integration & UI
+## Phase 3: Integration & UI [checkpoint: 685ca8f]
 
 - [x] **Task 1: Online Match UI** eaa604c
     - Add "Play Online" button.
     - Add "Searching for match" overlay.
 - [x] **Task 2: End-to-End Testing** d0ef703
     - Verify full game loop with local server and two clients (simulated or real).
-- [ ] **Task: Conductor - User Manual Verification 'Integration & UI' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Integration & UI' (Protocol in workflow.md)**
