@@ -14,7 +14,7 @@
 
 ## Phase 2: Piece & Win Animations
 
-- [ ] **Task 1: Animate Board Pieces**
+- [x] **Task 1: Animate Board Pieces** 96e7ae7
     - Update `BoardCell` to include scale/fade animation on creation.
 - [ ] **Task 2: Implement Win Visualization**
     - Add a visual highlight for the winning line.
