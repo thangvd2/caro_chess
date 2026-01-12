@@ -2,6 +2,12 @@ import 'package:equatable/equatable.dart';
 
 enum Player { x, o }
 
+enum GameRule {
+  standard,
+  freeStyle,
+  caro,
+}
+
 class Position extends Equatable {
   final int x;
   final int y;
