@@ -5,7 +5,7 @@
 - [x] **Task 1: Setup Audio Library and Assets** 371d4f1
     - Add `audioplayers` dependency.
     - Source and add placeholder mp3 assets.
-- [ ] **Task 2: Implement Audio Service**
+- [x] **Task 2: Implement Audio Service** 3a70e35
     - Create `AudioService` to pre-load and play sounds.
     - Write unit tests for the service wrapper.
 - [ ] **Task 3: Connect Audio to UI**
