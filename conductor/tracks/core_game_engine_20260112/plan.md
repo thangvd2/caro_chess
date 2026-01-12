@@ -37,7 +37,7 @@ This plan outlines the steps to implement the core game engine and local multipl
     - Add buttons to trigger undo/redo events.
 - [x] **Task: Conductor - User Manual Verification 'Flutter UI & State Management' (Protocol in workflow.md)**
 
-## Phase 3: Rule Variations & Guidelines
+## Phase 3: Rule Variations & Guidelines [checkpoint: eb96d4a]
 
 - [x] **Task 1: Rule Selection UI** 51ff41d
     - Implement a way for the user to select the rule set before/during a game.
@@ -45,4 +45,4 @@ This plan outlines the steps to implement the core game engine and local multipl
     - Create a modal or info section that displays rules for the selected variation.
 - [x] **Task 3: Final Integration and Persistence** 75bbafa
     - Ensure local persistence of the game state using `shared_preferences` or similar.
-- [ ] **Task: Conductor - User Manual Verification 'Rule Variations & Guidelines' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Rule Variations & Guidelines' (Protocol in workflow.md)**
