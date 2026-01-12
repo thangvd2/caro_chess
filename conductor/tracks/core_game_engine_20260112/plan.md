@@ -39,7 +39,7 @@ This plan outlines the steps to implement the core game engine and local multipl
 
 ## Phase 3: Rule Variations & Guidelines
 
-- [ ] **Task 1: Rule Selection UI**
+- [x] **Task 1: Rule Selection UI** 51ff41d
     - Implement a way for the user to select the rule set before/during a game.
 - [ ] **Task 2: Rule Explanatory Guidelines**
     - Create a modal or info section that displays rules for the selected variation.
