@@ -8,7 +8,7 @@
 - [x] **Task 2: Implement Audio Service** 3a70e35
     - Create `AudioService` to pre-load and play sounds.
     - Write unit tests for the service wrapper.
-- [ ] **Task 3: Connect Audio to UI**
+- [x] **Task 3: Connect Audio to UI** ed00f6e
     - Update UI listeners to trigger sounds on piece placement and game end.
 - [ ] **Task: Conductor - User Manual Verification 'Audio System' (Protocol in workflow.md)**
 
