@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../models/game_models.dart';
+import '../models/user_profile.dart';
 import '../engine/game_engine.dart';
 import '../repositories/game_repository.dart';
 import '../ai/ai_service.dart';
@@ -73,7 +74,8 @@ class GameInProgress extends GameState {
   final GameRule rule;
   final GameMode mode;
   final AIDifficulty difficulty;
-  final Player? myPlayer; // null for local/AI, specific for online
+  final Player? myPlayer;
+  final UserProfile? userProfile;
   final bool canUndo;
   final bool canRedo;
 
@@ -84,12 +86,13 @@ class GameInProgress extends GameState {
     required this.mode,
     required this.difficulty,
     this.myPlayer,
+    this.userProfile,
     this.canUndo = false,
     this.canRedo = false,
   });
 
   @override
-  List<Object?> get props => [board, currentPlayer, rule, mode, difficulty, myPlayer, canUndo, canRedo];
+  List<Object?> get props => [board, currentPlayer, rule, mode, difficulty, myPlayer, userProfile, canUndo, canRedo];
 }
 
 class GameOver extends GameState {
@@ -114,6 +117,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   GameMode _mode = GameMode.localPvP;
   AIDifficulty _difficulty = AIDifficulty.medium;
   Player? _myPlayer;
+  UserProfile? _userProfile;
 
   GameBloc({GameRepository? repository, AIService? aiService, WebSocketService? socketService}) 
       : _repository = repository ?? GameRepository(),
@@ -173,6 +177,11 @@ class GameBloc extends Bloc<GameEvent, GameState> {
           emit(_buildInProgressState());
         }
       }
+    } else if (msg['type'] == 'UPDATE_RANK') {
+      _userProfile = UserProfile(id: _userProfile?.id ?? "Player", elo: msg['elo']);
+      if (state is GameInProgress || state is GameOver) {
+        emit(_buildInProgressState());
+      }
     }
   }
 
@@ -205,8 +214,6 @@ class GameBloc extends Bloc<GameEvent, GameState> {
 
   void _onPlacePiece(PlacePiece event, Emitter<GameState> emit) {
     if (_engine == null) return;
-    
-    // Prevent move if it's not my turn in online mode
     if (_mode == GameMode.online && _engine!.currentPlayer != _myPlayer) return;
 
     final success = _engine!.placePiece(event.position);
@@ -283,6 +290,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       mode: _mode,
       difficulty: _difficulty,
       myPlayer: _myPlayer,
+      userProfile: _userProfile,
       canUndo: _engine!.canUndo,
       canRedo: _engine!.canRedo,
     );

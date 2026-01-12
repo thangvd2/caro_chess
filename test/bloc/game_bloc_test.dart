@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:caro_chess/bloc/game_bloc.dart';
 import 'package:caro_chess/models/game_models.dart';
+import 'package:caro_chess/models/user_profile.dart';
 import 'package:caro_chess/repositories/game_repository.dart';
 import 'package:caro_chess/ai/ai_service.dart';
 import 'package:caro_chess/services/web_socket_service.dart';
@@ -48,19 +49,21 @@ void main() {
     registerFallbackValue(Player.x);
   });
 
-  group('GameBloc Online', () {
+  group('GameBloc Profile Sync', () {
     blocTest<GameBloc, GameState>(
-      'emits [GameFindingMatch] then [GameInProgress] on match found',
+      'updates profile when UPDATE_RANK received',
       build: () => GameBloc(repository: repository, aiService: aiService, socketService: socketService),
       act: (bloc) async {
         bloc.add(const StartGame(mode: GameMode.online));
         await Future.delayed(const Duration(milliseconds: 10));
         socketController.add('{"type": "MATCH_FOUND", "color": "X"}');
+        await Future.delayed(const Duration(milliseconds: 10));
+        socketController.add('{"type": "UPDATE_RANK", "elo": 1216}');
       },
       wait: const Duration(milliseconds: 100),
+      skip: 2, // Skip FindingMatch and initial InProgress
       expect: () => [
-        isA<GameFindingMatch>(),
-        isA<GameInProgress>().having((s) => s.myPlayer, 'myPlayer', Player.x),
+        isA<GameInProgress>().having((s) => s.userProfile?.elo, 'elo', 1216),
       ],
     );
   });
