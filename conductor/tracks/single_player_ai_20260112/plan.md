@@ -8,7 +8,7 @@
 - [x] **Task 2: Implement Heuristic Evaluation** 6f289d4
     - Create `EvaluationService` to score board patterns.
     - Write unit tests for pattern recognition (e.g., scoring a "Open 3").
-- [ ] **Task 3: Implement Minimax with Alpha-Beta**
+- [x] **Task 3: Implement Minimax with Alpha-Beta** a6df891
     - Create `MinimaxSolver`.
     - Write unit tests to verify it finds winning moves in simple scenarios.
 - [ ] **Task: Conductor - User Manual Verification 'AI Engine Logic' (Protocol in workflow.md)**
