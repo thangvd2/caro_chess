@@ -49,7 +49,7 @@ class _GameControlsWidgetState extends State<GameControlsWidget> {
                     onPressed: () => context.read<GameBloc>().add(const StartGame(mode: GameMode.localPvP)),
                     child: const Text('Local PvP'),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 8),
                   ElevatedButton(
                     onPressed: () => context.read<GameBloc>().add(StartGame(
                           mode: GameMode.vsAI,
@@ -57,8 +57,23 @@ class _GameControlsWidgetState extends State<GameControlsWidget> {
                         )),
                     child: const Text('Play vs AI'),
                   ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () => context.read<GameBloc>().add(const StartGame(mode: GameMode.online)),
+                    child: const Text('Play Online'),
+                  ),
                 ],
               ),
+            ],
+          );
+        }
+
+        if (state is GameFindingMatch) {
+          return const Column(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 8),
+              Text("Finding match..."),
             ],
           );
         }
@@ -81,6 +96,9 @@ class _GameControlsWidgetState extends State<GameControlsWidget> {
         if (state is GameInProgress) {
           statusText = "Turn: ${state.currentPlayer == Player.x ? 'X' : 'O'}";
           if (state.mode == GameMode.vsAI) statusText += " (vs AI)";
+          if (state.mode == GameMode.online) {
+            statusText += state.myPlayer == state.currentPlayer ? " (Your turn)" : " (Opponent turn)";
+          }
           
           onReset = () => context.read<GameBloc>().add(ResetGame());
           if (state.canUndo) onUndo = () => context.read<GameBloc>().add(UndoMove());

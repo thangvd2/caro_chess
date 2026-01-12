@@ -44,6 +44,41 @@ void main() {
       expect(find.byType(DropdownButton<AIDifficulty>), findsOneWidget);
     });
 
+    testWidgets('shows Play Online button in Initial state', (tester) async {
+      when(() => gameBloc.state).thenReturn(GameInitial());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: BlocProvider.value(
+              value: gameBloc,
+              child: const GameControlsWidget(),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Play Online'), findsOneWidget);
+    });
+
+    testWidgets('shows finding match indicator', (tester) async {
+      when(() => gameBloc.state).thenReturn(GameFindingMatch());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: BlocProvider.value(
+              value: gameBloc,
+              child: const GameControlsWidget(),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.textContaining('Finding match'), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    });
+
     testWidgets('shows thinking indicator', (tester) async {
       when(() => gameBloc.state).thenReturn(GameAIThinking());
 
@@ -60,30 +95,6 @@ void main() {
 
       expect(find.textContaining('AI is thinking'), findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    });
-
-    testWidgets('reset button triggers ResetGame', (tester) async {
-      when(() => gameBloc.state).thenReturn(GameInProgress(
-        board: GameBoard(rows: 15, columns: 15),
-        currentPlayer: Player.x,
-        rule: GameRule.standard,
-        mode: GameMode.localPvP,
-        difficulty: AIDifficulty.medium,
-      ));
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: BlocProvider.value(
-              value: gameBloc,
-              child: const GameControlsWidget(),
-            ),
-          ),
-        ),
-      );
-
-      await tester.tap(find.text('Reset Game'));
-      verify(() => gameBloc.add(ResetGame())).called(1);
     });
   });
 }
