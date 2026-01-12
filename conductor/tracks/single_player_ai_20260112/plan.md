@@ -13,12 +13,12 @@
     - Write unit tests to verify it finds winning moves in simple scenarios.
 - [x] **Task: Conductor - User Manual Verification 'AI Engine Logic' (Protocol in workflow.md)**
 
-## Phase 2: AI Service & Concurrency
+## Phase 2: AI Service & Concurrency [checkpoint: 377e20f]
 
 - [x] **Task 1: Create AI Service with Isolate Support** 264986e
     - Implement `AIService` that uses `compute()` to run the solver.
     - Write integration tests to ensure it returns a move asynchronously.
-- [ ] **Task: Conductor - User Manual Verification 'AI Service & Concurrency' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'AI Service & Concurrency' (Protocol in workflow.md)**
 
 ## Phase 3: UI Integration
 
