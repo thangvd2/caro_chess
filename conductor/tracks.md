@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-## [~] Track: Online Multiplayer Infrastructure
-*Link: [./conductor/tracks/online_multiplayer_20260112/](./conductor/tracks/online_multiplayer_20260112/)*
+## [~] Track: Ranking and Statistics System
+*Link: [./conductor/tracks/ranking_stats_20260112/](./conductor/tracks/ranking_stats_20260112/)*
