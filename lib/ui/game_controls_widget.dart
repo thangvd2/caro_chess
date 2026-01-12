@@ -12,6 +12,8 @@ class GameControlsWidget extends StatelessWidget {
       builder: (context, state) {
         String statusText = "Welcome to Caro Chess";
         VoidCallback? onReset;
+        VoidCallback? onUndo;
+        VoidCallback? onRedo;
 
         if (state is GameInitial) {
            return ElevatedButton(
@@ -23,6 +25,8 @@ class GameControlsWidget extends StatelessWidget {
         if (state is GameInProgress) {
           statusText = "Current Turn: ${state.currentPlayer == Player.x ? 'X' : 'O'}";
           onReset = () => context.read<GameBloc>().add(ResetGame());
+          if (state.canUndo) onUndo = () => context.read<GameBloc>().add(UndoMove());
+          if (state.canRedo) onRedo = () => context.read<GameBloc>().add(RedoMove());
         } else if (state is GameOver) {
           if (state.winner != null) {
             statusText = "Winner: ${state.winner == Player.x ? 'X' : 'O'}";
@@ -42,6 +46,21 @@ class GameControlsWidget extends StatelessWidget {
                 style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
             ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: onUndo,
+                  child: const Text('Undo'),
+                ),
+                const SizedBox(width: 16),
+                ElevatedButton(
+                  onPressed: onRedo,
+                  child: const Text('Redo'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
             if (onReset != null)
               ElevatedButton(
                 onPressed: onReset,
