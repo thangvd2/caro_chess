@@ -12,13 +12,12 @@ void main() {
 
   testWidgets('App renders GameBoard and Controls', (WidgetTester tester) async {
     await tester.pumpWidget(const CaroChessApp());
-    // Give it time for async shared_prefs call and Bloc state change
-    await tester.pump(); // Start LoadSavedGame
-    await tester.pump(); // Process LoadSavedGame
+    await tester.pump();
+    await tester.pump();
     await tester.pumpAndSettle();
 
     expect(find.byType(GameBoardWidget), findsOneWidget);
     expect(find.byType(GameControlsWidget), findsOneWidget);
-    expect(find.textContaining('Current Turn: X'), findsOneWidget);
+    expect(find.textContaining('Turn: X'), findsOneWidget);
   });
 }

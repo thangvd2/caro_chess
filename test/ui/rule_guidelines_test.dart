@@ -6,6 +6,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:caro_chess/bloc/game_bloc.dart';
 import 'package:caro_chess/models/game_models.dart';
 import 'package:caro_chess/ui/rule_guidelines_widget.dart';
+import 'package:caro_chess/ai/ai_service.dart';
 
 class MockGameBloc extends MockBloc<GameEvent, GameState> implements GameBloc {}
 
@@ -22,6 +23,8 @@ void main() {
         board: GameBoard(rows: 15, columns: 15),
         currentPlayer: Player.x,
         rule: GameRule.standard,
+        mode: GameMode.localPvP,
+        difficulty: AIDifficulty.medium,
       ));
 
       await tester.pumpWidget(
@@ -41,6 +44,8 @@ void main() {
         board: GameBoard(rows: 15, columns: 15),
         currentPlayer: Player.x,
         rule: GameRule.caro,
+        mode: GameMode.localPvP,
+        difficulty: AIDifficulty.medium,
       ));
 
       await tester.pumpWidget(

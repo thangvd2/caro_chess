@@ -6,6 +6,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:caro_chess/bloc/game_bloc.dart';
 import 'package:caro_chess/models/game_models.dart';
 import 'package:caro_chess/ui/game_board_widget.dart';
+import 'package:caro_chess/ai/ai_service.dart';
 
 class MockGameBloc extends MockBloc<GameEvent, GameState> implements GameBloc {}
 
@@ -27,6 +28,8 @@ void main() {
         board: GameBoard(rows: 15, columns: 15),
         currentPlayer: Player.x,
         rule: GameRule.standard,
+        mode: GameMode.localPvP,
+        difficulty: AIDifficulty.medium,
       ));
 
       await tester.pumpWidget(
@@ -38,9 +41,6 @@ void main() {
         ),
       );
 
-      // We expect 15x15 = 225 cells. 
-      // Note: flutter_test might not render off-screen widgets if inside ListView/GridView without explicit size.
-      // But typically findsWidgets works.
       expect(find.byType(BoardCell), findsWidgets);
     });
 
@@ -49,6 +49,8 @@ void main() {
         board: GameBoard(rows: 15, columns: 15),
         currentPlayer: Player.x,
         rule: GameRule.standard,
+        mode: GameMode.localPvP,
+        difficulty: AIDifficulty.medium,
       ));
 
       await tester.pumpWidget(
@@ -67,13 +69,6 @@ void main() {
     
     testWidgets('renders X and O correctly', (tester) async {
         final board = GameBoard(rows: 15, columns: 15);
-        // Note: Our current GameBoard constructor generates new cells list.
-        // We need to modify the cells in place because cells list is mutable list of cells?
-        // Wait, `List<List<Cell>> cells`.
-        // `Cell` is Equatable (immutable?).
-        // `_board.cells[y][x] = Cell(...)` in engine works.
-        // Here we do the same manually.
-        
         board.cells[0][0] = const Cell(position: Position(x: 0, y: 0), owner: Player.x);
         board.cells[0][1] = const Cell(position: Position(x: 1, y: 0), owner: Player.o);
         
@@ -81,6 +76,8 @@ void main() {
             board: board,
             currentPlayer: Player.x,
             rule: GameRule.standard,
+            mode: GameMode.localPvP,
+            difficulty: AIDifficulty.medium,
         ));
         
         await tester.pumpWidget(
