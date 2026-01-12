@@ -33,7 +33,7 @@ This plan outlines the steps to implement the core game engine and local multipl
     - Connect UI interactions to `GameBloc`.
 - [x] **Task 3: Implement Game Info and Controls** ed46086
     - Build UI for turn indicator, reset button, and status messages.
-- [ ] **Task 4: Implement Undo/Redo Controls**
+- [x] **Task 4: Implement Undo/Redo Controls** b3d3230
     - Add buttons to trigger undo/redo events.
 - [ ] **Task: Conductor - User Manual Verification 'Flutter UI & State Management' (Protocol in workflow.md)**
 
