@@ -1,0 +1,8 @@
+{
+  "track_id": "polishing_gamification_20260112",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-01-12T23:00:00Z",
+  "updated_at": "2026-01-12T23:00:00Z",
+  "description": "Add sound effects (move, win, lose), particle animations for wins, smooth transitions, and juice (screen shake, haptics) to fulfill the high-energy vision."
+}
