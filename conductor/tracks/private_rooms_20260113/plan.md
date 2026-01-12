@@ -6,7 +6,7 @@
     - Create `RoomManager` struct to store private sessions by code.
     - Implement code generation logic.
     - Write unit tests for room creation and joining.
-- [ ] **Task 2: Update Protocol Handlers**
+- [x] **Task 2: Update Protocol Handlers** 8f6986b
     - Update `Client.readPump` to handle `CREATE_ROOM` and `JOIN_ROOM`.
     - Integrate `RoomManager` into `main.go`.
 - [ ] **Task: Conductor - User Manual Verification 'Backend Room Logic' (Protocol in workflow.md)**
