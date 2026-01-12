@@ -20,7 +20,7 @@
     - Write integration tests to ensure it returns a move asynchronously.
 - [x] **Task: Conductor - User Manual Verification 'AI Service & Concurrency' (Protocol in workflow.md)**
 
-## Phase 3: UI Integration
+## Phase 3: UI Integration [checkpoint: 3651a31]
 
 - [x] **Task 1: Update GameBloc for AI Turn** cd347b8
     - Add `AIMoveRequested` event and `GameAIThinking` state.
@@ -28,4 +28,4 @@
 - [x] **Task 2: Update Game Controls for Single Player** 7b7cf3e
     - Add "Play vs AI" and Difficulty Selector to UI.
     - Show thinking indicator.
-- [ ] **Task: Conductor - User Manual Verification 'UI Integration' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'UI Integration' (Protocol in workflow.md)**
