@@ -17,7 +17,7 @@
 
 ## Phase 2: Flutter Client Networking
 
-- [ ] **Task 1: Implement WebSocket Service**
+- [x] **Task 1: Implement WebSocket Service** 9348c9f
     - Create `WebSocketService` in Flutter to connect to server.
     - Implement JSON serialization for game messages.
 - [ ] **Task 2: Update GameBloc for Online Play**
