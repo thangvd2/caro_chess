@@ -6,7 +6,7 @@ This plan outlines the steps to implement the core game engine and local multipl
 
 - [x] **Task 1: Define Game Models and Basic State** 1238e4d
     - Create `GameBoard`, `Cell`, `Position`, and `Player` models.
-- [ ] **Task 2: Implement Move Validation and Turn Logic**
+- [x] **Task 2: Implement Move Validation and Turn Logic** 5942bfc
     - Write unit tests for placing pieces and switching turns.
     - Implement logic to manage the 15x15 board state.
 - [ ] **Task 3: Implement Win Detection - Standard Gomoku**
