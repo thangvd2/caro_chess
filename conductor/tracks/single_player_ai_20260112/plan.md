@@ -5,7 +5,7 @@
 - [x] **Task 1: Implement Move Generator** 1aa485f
     - Create `MoveGenerator` class to find relevant moves.
     - Write unit tests for pruning empty areas.
-- [ ] **Task 2: Implement Heuristic Evaluation**
+- [x] **Task 2: Implement Heuristic Evaluation** 6f289d4
     - Create `EvaluationService` to score board patterns.
     - Write unit tests for pattern recognition (e.g., scoring a "Open 3").
 - [ ] **Task 3: Implement Minimax with Alpha-Beta**
