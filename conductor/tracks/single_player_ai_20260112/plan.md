@@ -15,7 +15,7 @@
 
 ## Phase 2: AI Service & Concurrency
 
-- [ ] **Task 1: Create AI Service with Isolate Support**
+- [x] **Task 1: Create AI Service with Isolate Support** 264986e
     - Implement `AIService` that uses `compute()` to run the solver.
     - Write integration tests to ensure it returns a move asynchronously.
 - [ ] **Task: Conductor - User Manual Verification 'AI Service & Concurrency' (Protocol in workflow.md)**
