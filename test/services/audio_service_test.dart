@@ -23,7 +23,20 @@ void main() {
 
     test('plays move sound', () async {
       await service.playMove();
-      verify(() => mockPlayer.play(any())).called(1);
+      final captured = verify(() => mockPlayer.play(captureAny())).captured;
+      expect(captured.last, isA<AssetSource>().having((s) => s.path, 'path', 'audio/move.mp3'));
+    });
+
+    test('plays win sound', () async {
+      await service.playWin();
+      final captured = verify(() => mockPlayer.play(captureAny())).captured;
+      expect(captured.last, isA<AssetSource>().having((s) => s.path, 'path', 'audio/win.mp3'));
+    });
+
+    test('plays lose sound', () async {
+      await service.playLose();
+      final captured = verify(() => mockPlayer.play(captureAny())).captured;
+      expect(captured.last, isA<AssetSource>().having((s) => s.path, 'path', 'audio/lose.mp3'));
     });
   });
 }
