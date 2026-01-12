@@ -26,7 +26,7 @@
 
 ## Phase 3: Synchronization & Final Integration
 
-- [ ] **Task 1: Profile Sync via WebSocket**
+- [x] **Task 1: Profile Sync via WebSocket** 41d8fbb
     - Add socket events to fetch and push profile data.
     - Update client state when rank changes.
 - [ ] **Task 2: End-to-End Testing**
