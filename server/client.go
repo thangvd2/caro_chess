@@ -26,6 +26,7 @@ type Client struct {
 	ID   string
 	hub  *Hub
 	mm   *Matchmaker
+	rm   *RoomManager
 	conn *websocket.Conn
 	send chan []byte
 }
@@ -58,6 +59,22 @@ func (c *Client) readPump() {
 				c.hub.broadcast <- resp
 			} else if msg["type"] == "WIN_CLAIM" {
 				c.mm.endGame(c)
+			} else if msg["type"] == "FIND_MATCH" {
+				c.mm.addClient <- c
+			} else if msg["type"] == "CREATE_ROOM" {
+				code, _ := c.rm.createRoom(c)
+				resp, _ := json.Marshal(map[string]string{"type": "ROOM_CREATED", "code": code})
+				c.send <- resp
+			} else if msg["type"] == "JOIN_ROOM" {
+				code := msg["code"].(string)
+				err := c.rm.joinRoom(code, c)
+				if err != nil {
+					resp, _ := json.Marshal(map[string]string{"type": "ERROR", "message": err.Error()})
+					c.send <- resp
+				} else {
+					session, _ := c.rm.getRoom(code)
+					c.mm.startGame(session.ClientX, session.ClientO)
+				}
 			} else {
 				c.hub.broadcast <- message
 			}
@@ -103,15 +120,14 @@ func (c *Client) writePump() {
 	}
 }
 
-func serveWs(hub *Hub, mm *Matchmaker, w http.ResponseWriter, r *http.Request, id string) {
+func serveWs(hub *Hub, mm *Matchmaker, rm *RoomManager, w http.ResponseWriter, r *http.Request, id string) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	client := &Client{ID: id, hub: hub, mm: mm, conn: conn, send: make(chan []byte, 256)}
+	client := &Client{ID: id, hub: hub, mm: mm, rm: rm, conn: conn, send: make(chan []byte, 256)}
 	client.hub.register <- client
-	mm.addClient <- client
 
 	go client.writePump()
 	go client.readPump()

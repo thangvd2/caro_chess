@@ -23,10 +23,11 @@ func TestRankingUpdate(t *testing.T) {
 	go hub.run()
 	mm := newMatchmaker(repo)
 	go mm.run()
+	rm := newRoomManager()
 
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		id := r.URL.Query().Get("id")
-		serveWs(hub, mm, w, r, id)
+		serveWs(hub, mm, rm, w, r, id)
 	}))
 	defer s.Close()
 
@@ -37,12 +38,14 @@ func TestRankingUpdate(t *testing.T) {
 		t.Fatalf("dial p1: %v", err)
 	}
 	defer c1.Close()
+	c1.WriteMessage(websocket.TextMessage, []byte(`{"type":"FIND_MATCH"}`))
 
 	c2, _, err := websocket.DefaultDialer.Dial(u+"?id=p2", nil)
 	if err != nil {
 		t.Fatalf("dial p2: %v", err)
 	}
 	defer c2.Close()
+	c2.WriteMessage(websocket.TextMessage, []byte(`{"type":"FIND_MATCH"}`))
 
 	// Consume match found
 	c1.ReadMessage()

@@ -18,9 +18,10 @@ func TestFullGameLoop(t *testing.T) {
 	go hub.run()
 	mm := newMatchmaker(repo)
 	go mm.run()
+	rm := newRoomManager()
 
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		serveWs(hub, mm, w, r, "test_user")
+		serveWs(hub, mm, rm, w, r, "test_user")
 	}))
 	defer s.Close()
 
@@ -31,12 +32,14 @@ func TestFullGameLoop(t *testing.T) {
 		t.Fatalf("dial c1: %v", err)
 	}
 	defer c1.Close()
+	c1.WriteMessage(websocket.TextMessage, []byte(`{"type":"FIND_MATCH"}`))
 
 	c2, _, err := websocket.DefaultDialer.Dial(u, nil)
 	if err != nil {
 		t.Fatalf("dial c2: %v", err)
 	}
 	defer c2.Close()
+	c2.WriteMessage(websocket.TextMessage, []byte(`{"type":"FIND_MATCH"}`))
 
 	_, m1, _ := c1.ReadMessage()
 	_, m2, _ := c2.ReadMessage()

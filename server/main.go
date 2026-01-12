@@ -20,13 +20,15 @@ func main() {
 	
 	matchmaker := newMatchmaker(repo)
 	go matchmaker.run()
+	
+	roomManager := newRoomManager()
 
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		id := r.URL.Query().Get("id")
 		if id == "" {
 			id = "guest"
 		}
-		serveWs(hub, matchmaker, w, r, id)
+		serveWs(hub, matchmaker, roomManager, w, r, id)
 	})
 
 	log.Printf("Server starting on %s", *addr)
