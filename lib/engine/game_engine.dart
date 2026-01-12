@@ -56,31 +56,55 @@ class GameEngine {
     ];
 
     for (final dir in directions) {
-      int count = 1;
-      
+      int forwardCount = 0;
       // Check forward
-      for (int i = 1; i < 6; i++) { // Check slightly further for overlines
+      for (int i = 1; i < 6; i++) {
         final x = lastMove.x + dir[0] * i;
         final y = lastMove.y + dir[1] * i;
         if (!_isValidPosition(Position(x: x, y: y)) || _board.cells[y][x].owner != player) break;
-        count++;
+        forwardCount++;
       }
       
+      int backwardCount = 0;
       // Check backward
       for (int i = 1; i < 6; i++) {
         final x = lastMove.x - dir[0] * i;
         final y = lastMove.y - dir[1] * i;
         if (!_isValidPosition(Position(x: x, y: y)) || _board.cells[y][x].owner != player) break;
-        count++;
+        backwardCount++;
       }
+      
+      int totalCount = 1 + forwardCount + backwardCount;
 
       if (rule == GameRule.standard) {
-        if (count == 5) return true;
+        if (totalCount == 5) return true;
       } else if (rule == GameRule.freeStyle) {
-        if (count >= 5) return true;
-      } else {
-        // Caro rule placeholder
-        if (count == 5) return true;
+        if (totalCount >= 5) return true;
+      } else if (rule == GameRule.caro) {
+        if (totalCount == 5) {
+           // Check blocked ends
+           bool blockedForward = false;
+           final fX = lastMove.x + dir[0] * (forwardCount + 1);
+           final fY = lastMove.y + dir[1] * (forwardCount + 1);
+           final fPos = Position(x: fX, y: fY);
+           if (!_isValidPosition(fPos)) {
+             blockedForward = true;
+           } else if (_board.cells[fY][fX].owner != null && _board.cells[fY][fX].owner != player) {
+             blockedForward = true;
+           }
+           
+           bool blockedBackward = false;
+           final bX = lastMove.x - dir[0] * (backwardCount + 1);
+           final bY = lastMove.y - dir[1] * (backwardCount + 1);
+           final bPos = Position(x: bX, y: bY);
+           if (!_isValidPosition(bPos)) {
+             blockedBackward = true;
+           } else if (_board.cells[bY][bX].owner != null && _board.cells[bY][bX].owner != player) {
+             blockedBackward = true;
+           }
+           
+           if (!(blockedForward && blockedBackward)) return true;
+        }
       }
     }
     return false;
