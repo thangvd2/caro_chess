@@ -38,6 +38,7 @@ dependencies:
   flutter_bloc: ^9.1.1
   shared_preferences: ^2.5.4
   web_socket_channel: ^3.0.3
+  audioplayers: ^6.5.1
 
 dev_dependencies:
   flutter_test:
@@ -57,11 +58,10 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
-
-  # The following line ensures that the Material Icons font is
-  # included with your application, so that you can use the icons in
-  # the material Icons class.
   uses-material-design: true
+  assets:
+    - assets/audio/
+
 
   # To add assets to your application, add an assets section, like this:
   # assets:
