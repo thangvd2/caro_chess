@@ -1,6 +1,6 @@
 # Track Plan: Online Multiplayer Infrastructure
 
-## Phase 1: Go Backend Server
+## Phase 1: Go Backend Server [checkpoint: 7f4d66a]
 
 - [x] **Task 1: Set up Go Project** c8c16b0
     - Initialize `server/` directory and `go.mod`.
@@ -13,7 +13,7 @@
     - Create `Matchmaker` to pair waiting clients.
     - Implement `GameSession` to manage board state on server.
     - Write unit tests for pairing and game loop.
-- [ ] **Task: Conductor - User Manual Verification 'Go Backend Server' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Go Backend Server' (Protocol in workflow.md)**
 
 ## Phase 2: Flutter Client Networking
 
