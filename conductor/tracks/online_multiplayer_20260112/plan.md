@@ -9,7 +9,7 @@
     - Create `Hub` to manage clients.
     - Implement `Client` struct to read/write messages.
     - Write unit tests for connection handling.
-- [ ] **Task 3: Implement Matchmaking Logic**
+- [x] **Task 3: Implement Matchmaking Logic** 6ab832c
     - Create `Matchmaker` to pair waiting clients.
     - Implement `GameSession` to manage board state on server.
     - Write unit tests for pairing and game loop.
