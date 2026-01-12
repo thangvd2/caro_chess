@@ -8,7 +8,7 @@
 - [x] **Task 2: Setup Database Persistence** 4640a89
     - Implement a simple repository to save/load user stats.
     - Write unit tests for data persistence.
-- [ ] **Task 3: Integrate with Game Loop**
+- [x] **Task 3: Integrate with Game Loop** fe9b6e4
     - Update `GameSession` to trigger ELO updates on match end.
     - Write integration tests for end-of-match stats update.
 - [ ] **Task: Conductor - User Manual Verification 'Backend ELO & Persistence' (Protocol in workflow.md)**
