@@ -21,6 +21,7 @@ class GameEngine {
   Player? get winner => _winner;
   bool get canUndo => _history.isNotEmpty;
   bool get canRedo => _redoStack.isNotEmpty;
+  List<Position> get history => List.unmodifiable(_history);
 
   bool placePiece(Position position) {
     if (_isGameOver) return false;
