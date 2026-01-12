@@ -30,6 +30,6 @@
 - [x] **Task 1: Online Match UI** eaa604c
     - Add "Play Online" button.
     - Add "Searching for match" overlay.
-- [ ] **Task 2: End-to-End Testing**
+- [x] **Task 2: End-to-End Testing** d0ef703
     - Verify full game loop with local server and two clients (simulated or real).
 - [ ] **Task: Conductor - User Manual Verification 'Integration & UI' (Protocol in workflow.md)**
