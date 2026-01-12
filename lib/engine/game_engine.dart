@@ -6,6 +6,8 @@ class GameEngine {
   bool _isGameOver;
   Player? _winner;
   final GameRule rule;
+  final List<Position> _history = [];
+  final List<Position> _redoStack = [];
 
   GameEngine({int rows = 15, int columns = 15, this.rule = GameRule.standard})
       : _board = GameBoard(rows: rows, columns: columns),
@@ -17,24 +19,75 @@ class GameEngine {
   Player get currentPlayer => _currentPlayer;
   bool get isGameOver => _isGameOver;
   Player? get winner => _winner;
+  bool get canUndo => _history.isNotEmpty;
+  bool get canRedo => _redoStack.isNotEmpty;
 
   bool placePiece(Position position) {
     if (_isGameOver) return false;
     if (!_isValidPosition(position)) return false;
     if (!_board.cells[position.y][position.x].isEmpty) return false;
 
-    // Place the piece
+    _applyMove(position);
+    
+    _history.add(position);
+    _redoStack.clear();
+    
+    return true;
+  }
+  
+  void _applyMove(Position position) {
     _board.cells[position.y][position.x] = Cell(position: position, owner: _currentPlayer);
     
-    // Check for win
     if (_checkWin(position)) {
       _isGameOver = true;
       _winner = _currentPlayer;
-      return true; 
+    } else {
+      _currentPlayer = _currentPlayer == Player.x ? Player.o : Player.x;
     }
+  }
 
-    // Switch turn
-    _currentPlayer = _currentPlayer == Player.x ? Player.o : Player.x;
+  bool undo() {
+    if (!canUndo) return false;
+    
+    final lastMove = _history.removeLast();
+    _redoStack.add(lastMove);
+    
+    // Revert board cell
+    _board.cells[lastMove.y][lastMove.x] = Cell(position: lastMove);
+    
+    // If game was over, we are reverting the winning move.
+    // So turn was NOT switched. We assume the player who made the move is the current player (winner).
+    // If game was NOT over, turn WAS switched. So we need to switch back.
+    
+    if (_isGameOver) {
+       // Turn is effectively the winner's turn (since it didn't switch).
+       // So we don't need to toggle turn? 
+       // Wait. 
+       // Start: X turn.
+       // X places. Win. _currentPlayer stays X.
+       // Undo: Remove X. Game Not Over. _currentPlayer should be X (ready to play again).
+       // So if `_isGameOver` was true, we DO NOT toggle turn.
+       // But we MUST reset _isGameOver.
+       _isGameOver = false;
+       _winner = null;
+    } else {
+       // Start: X turn.
+       // X places. No win. Turn becomes O.
+       // Undo: Remove X. Turn should become X.
+       // So we toggle back.
+       _currentPlayer = _currentPlayer == Player.x ? Player.o : Player.x;
+    }
+    
+    return true;
+  }
+
+  bool redo() {
+    if (!canRedo) return false;
+    
+    final nextMove = _redoStack.removeLast();
+    _history.add(nextMove);
+    
+    _applyMove(nextMove);
     
     return true;
   }
@@ -57,7 +110,6 @@ class GameEngine {
 
     for (final dir in directions) {
       int forwardCount = 0;
-      // Check forward
       for (int i = 1; i < 6; i++) {
         final x = lastMove.x + dir[0] * i;
         final y = lastMove.y + dir[1] * i;
@@ -66,7 +118,6 @@ class GameEngine {
       }
       
       int backwardCount = 0;
-      // Check backward
       for (int i = 1; i < 6; i++) {
         final x = lastMove.x - dir[0] * i;
         final y = lastMove.y - dir[1] * i;
@@ -82,7 +133,6 @@ class GameEngine {
         if (totalCount >= 5) return true;
       } else if (rule == GameRule.caro) {
         if (totalCount == 5) {
-           // Check blocked ends
            bool blockedForward = false;
            final fX = lastMove.x + dir[0] * (forwardCount + 1);
            final fY = lastMove.y + dir[1] * (forwardCount + 1);
