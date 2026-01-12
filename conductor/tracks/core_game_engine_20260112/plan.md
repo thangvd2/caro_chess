@@ -2,7 +2,7 @@
 
 This plan outlines the steps to implement the core game engine and local multiplayer mode.
 
-## Phase 1: Game Engine Logic (Pure Dart)
+## Phase 1: Game Engine Logic (Pure Dart) [checkpoint: 1bf615c]
 
 - [x] **Task 1: Define Game Models and Basic State** 1238e4d
     - Create `GameBoard`, `Cell`, `Position`, and `Player` models.
@@ -21,7 +21,7 @@ This plan outlines the steps to implement the core game engine and local multipl
 - [x] **Task 6: Implement Undo/Redo Functionality** ab70e4c
     - Write unit tests for the move history stack.
     - Implement undo/redo logic.
-- [ ] **Task: Conductor - User Manual Verification 'Game Engine Logic' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Game Engine Logic' (Protocol in workflow.md)**
 
 ## Phase 2: Flutter UI & State Management
 
