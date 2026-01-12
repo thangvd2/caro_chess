@@ -1,0 +1,74 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/game_bloc.dart';
+import '../models/game_models.dart';
+
+class GameBoardWidget extends StatelessWidget {
+  const GameBoardWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<GameBloc, GameState>(
+      builder: (context, state) {
+        if (state is GameInProgress || state is GameOver) {
+          final board = (state is GameInProgress) 
+              ? state.board 
+              : (state as GameOver).board;
+              
+          return AspectRatio(
+            aspectRatio: 1.0,
+            child: GridView.builder(
+              itemCount: board.rows * board.columns,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: board.columns,
+              ),
+              itemBuilder: (context, index) {
+                final x = index % board.columns;
+                final y = index ~/ board.columns;
+                final cell = board.cells[y][x];
+                
+                return BoardCell(
+                  cell: cell,
+                  onTap: () {
+                    context.read<GameBloc>().add(PlacePiece(Position(x: x, y: y)));
+                  },
+                );
+              },
+            ),
+          );
+        }
+        return const Center(child: Text("Loading..."));
+      },
+    );
+  }
+}
+
+class BoardCell extends StatelessWidget {
+  final Cell cell;
+  final VoidCallback onTap;
+
+  const BoardCell({super.key, required this.cell, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey),
+          color: Colors.white,
+        ),
+        child: Center(
+          child: Text(
+            cell.owner == Player.x ? 'X' : (cell.owner == Player.o ? 'O' : ''),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: cell.owner == Player.x ? Colors.blue : Colors.red,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
