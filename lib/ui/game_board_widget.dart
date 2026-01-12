@@ -19,6 +19,7 @@ class GameBoardWidget extends StatelessWidget {
             aspectRatio: 1.0,
             child: GridView.builder(
               itemCount: board.rows * board.columns,
+              physics: const NeverScrollableScrollPhysics(),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: board.columns,
               ),
@@ -55,18 +56,34 @@ class BoardCell extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey),
+          border: Border.all(color: Colors.grey.shade300),
           color: Colors.white,
         ),
         child: Center(
-          child: Text(
-            cell.owner == Player.x ? 'X' : (cell.owner == Player.o ? 'O' : ''),
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: cell.owner == Player.x ? Colors.blue : Colors.red,
-            ),
-          ),
+          child: cell.isEmpty
+              ? const SizedBox.shrink()
+              : TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.elasticOut,
+                  builder: (context, value, child) {
+                    return Transform.scale(
+                      scale: value,
+                      child: Opacity(
+                        opacity: value.clamp(0.0, 1.0),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: Text(
+                    cell.owner == Player.x ? 'X' : 'O',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: cell.owner == Player.x ? Colors.blue : Colors.red,
+                    ),
+                  ),
+                ),
         ),
       ),
     );
