@@ -21,7 +21,7 @@
     - Implement celebration overlay.
 - [x] **Task: Conductor - User Manual Verification 'Piece & Win Animations' (Protocol in workflow.md)**
 
-## Phase 3: "Juice" and Feedback
+## Phase 3: "Juice" and Feedback [checkpoint: 5d2d12d]
 
 - [x] **Task 1: Particle Effects** 2b9a45f
     - Add `confetti` library.
@@ -29,4 +29,4 @@
 - [x] **Task 2: Haptics & Screen Shake** 96186d3
     - Add `HapticFeedback` on placement.
     - Implement screen shake on winning move.
-- [ ] **Task: Conductor - User Manual Verification 'Juice and Feedback' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Juice and Feedback' (Protocol in workflow.md)**
