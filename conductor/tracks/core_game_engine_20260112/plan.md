@@ -15,7 +15,7 @@ This plan outlines the steps to implement the core game engine and local multipl
 - [x] **Task 4: Implement Win Detection - Free-style** a72fd2d
     - Write unit tests for overlines (6+ in a row).
     - Implement detection logic.
-- [ ] **Task 5: Implement Win Detection - Vietnamese Caro (Blocked Ends)**
+- [x] **Task 5: Implement Win Detection - Vietnamese Caro (Blocked Ends)** 991ca30
     - Write unit tests for the "blocked at both ends" edge case.
     - Implement the specific Vietnamese Caro logic.
 - [ ] **Task 6: Implement Undo/Redo Functionality**
