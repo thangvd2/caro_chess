@@ -27,7 +27,7 @@
 
 ## Phase 3: Integration & UI
 
-- [ ] **Task 1: Online Match UI**
+- [x] **Task 1: Online Match UI** eaa604c
     - Add "Play Online" button.
     - Add "Searching for match" overlay.
 - [ ] **Task 2: End-to-End Testing**
