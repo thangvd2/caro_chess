@@ -23,7 +23,7 @@
 
 ## Phase 3: "Juice" and Feedback
 
-- [ ] **Task 1: Particle Effects**
+- [~] **Task 1: Particle Effects**
     - Add `confetti` library.
     - Trigger particle explosion on victory.
 - [ ] **Task 2: Haptics & Screen Shake**
