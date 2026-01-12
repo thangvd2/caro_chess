@@ -1,6 +1,6 @@
 # Track Plan: Polishing & Gamification
 
-## Phase 1: Audio System
+## Phase 1: Audio System [checkpoint: 2c13db5]
 
 - [x] **Task 1: Setup Audio Library and Assets** 371d4f1
     - Add `audioplayers` dependency.
@@ -10,7 +10,7 @@
     - Write unit tests for the service wrapper.
 - [x] **Task 3: Connect Audio to UI** ed00f6e
     - Update UI listeners to trigger sounds on piece placement and game end.
-- [ ] **Task: Conductor - User Manual Verification 'Audio System' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Audio System' (Protocol in workflow.md)**
 
 ## Phase 2: Piece & Win Animations
 
