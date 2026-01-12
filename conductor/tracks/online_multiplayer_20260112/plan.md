@@ -5,7 +5,7 @@
 - [x] **Task 1: Set up Go Project** c8c16b0
     - Initialize `server/` directory and `go.mod`.
     - Install `gorilla/websocket`.
-- [ ] **Task 2: Implement WebSocket Hub and Client**
+- [x] **Task 2: Implement WebSocket Hub and Client** 8d13bf5
     - Create `Hub` to manage clients.
     - Implement `Client` struct to read/write messages.
     - Write unit tests for connection handling.
