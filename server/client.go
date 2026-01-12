@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"time"
@@ -9,20 +10,20 @@ import (
 )
 
 const (
-	writeWait = 10 * time.Second
-	pongWait = 60 * time.Second
-	pingPeriod = (pongWait * 9) / 10
+	writeWait      = 10 * time.Second
+	pongWait       = 60 * time.Second
+	pingPeriod     = (pongWait * 9) / 10
 	maxMessageSize = 512
 )
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool { return true },
+	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
 type Client struct {
-	hub *Hub
+	hub  *Hub
 	conn *websocket.Conn
 	send chan []byte
 }
@@ -43,7 +44,20 @@ func (c *Client) readPump() {
 			}
 			break
 		}
-		c.hub.broadcast <- message
+
+		var msg map[string]interface{}
+		if err := json.Unmarshal(message, &msg); err == nil {
+			if msg["type"] == "MOVE" {
+				resp, _ := json.Marshal(map[string]interface{}{
+					"type": "MOVE_MADE",
+					"x":    msg["x"],
+					"y":    msg["y"],
+				})
+				c.hub.broadcast <- resp
+			} else {
+				c.hub.broadcast <- message
+			}
+		}
 	}
 }
 
