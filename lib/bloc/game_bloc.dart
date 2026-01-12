@@ -1,9 +1,12 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../models/game_models.dart';
 import '../engine/game_engine.dart';
 import '../repositories/game_repository.dart';
 import '../ai/ai_service.dart';
+import '../services/web_socket_service.dart';
 
 // Events
 abstract class GameEvent extends Equatable {
@@ -46,6 +49,12 @@ class ChangeRules extends GameEvent {
 class UndoMove extends GameEvent {}
 class RedoMove extends GameEvent {}
 class AIMoveRequested extends GameEvent {}
+class SocketMessageReceived extends GameEvent {
+  final dynamic message;
+  const SocketMessageReceived(this.message);
+  @override
+  List<Object?> get props => [message];
+}
 
 // States
 abstract class GameState extends Equatable {
@@ -55,7 +64,7 @@ abstract class GameState extends Equatable {
 }
 
 class GameInitial extends GameState {}
-
+class GameFindingMatch extends GameState {}
 class GameAIThinking extends GameState {}
 
 class GameInProgress extends GameState {
@@ -64,6 +73,7 @@ class GameInProgress extends GameState {
   final GameRule rule;
   final GameMode mode;
   final AIDifficulty difficulty;
+  final Player? myPlayer; // null for local/AI, specific for online
   final bool canUndo;
   final bool canRedo;
 
@@ -73,12 +83,13 @@ class GameInProgress extends GameState {
     required this.rule,
     required this.mode,
     required this.difficulty,
+    this.myPlayer,
     this.canUndo = false,
     this.canRedo = false,
   });
 
   @override
-  List<Object?> get props => [board, currentPlayer, rule, mode, difficulty, canUndo, canRedo];
+  List<Object?> get props => [board, currentPlayer, rule, mode, difficulty, myPlayer, canUndo, canRedo];
 }
 
 class GameOver extends GameState {
@@ -96,13 +107,18 @@ class GameOver extends GameState {
 class GameBloc extends Bloc<GameEvent, GameState> {
   final GameRepository _repository;
   final AIService _aiService;
+  final WebSocketService _socketService;
+  StreamSubscription? _socketSubscription;
+
   GameEngine? _engine;
   GameMode _mode = GameMode.localPvP;
   AIDifficulty _difficulty = AIDifficulty.medium;
+  Player? _myPlayer;
 
-  GameBloc({GameRepository? repository, AIService? aiService}) 
+  GameBloc({GameRepository? repository, AIService? aiService, WebSocketService? socketService}) 
       : _repository = repository ?? GameRepository(),
         _aiService = aiService ?? AIService(),
+        _socketService = socketService ?? WebSocketService(),
         super(GameInitial()) {
     on<StartGame>(_onStartGame);
     on<LoadSavedGame>(_onLoadSavedGame);
@@ -111,14 +127,53 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     on<UndoMove>(_onUndoMove);
     on<RedoMove>(_onRedoMove);
     on<AIMoveRequested>(_onAIMoveRequested);
+    on<SocketMessageReceived>(_onSocketMessageReceived);
+  }
+
+  @override
+  Future<void> close() {
+    _socketSubscription?.cancel();
+    return super.close();
   }
 
   void _onStartGame(StartGame event, Emitter<GameState> emit) {
     _mode = event.mode;
     _difficulty = event.difficulty;
-    _engine = GameEngine(rule: event.rule);
-    _saveState();
-    emit(_buildInProgressState());
+    _myPlayer = null;
+
+    if (_mode == GameMode.online) {
+      emit(GameFindingMatch());
+      _socketService.connect();
+      _socketSubscription?.cancel();
+      _socketSubscription = _socketService.stream.listen((msg) {
+        add(SocketMessageReceived(msg));
+      });
+    } else {
+      _engine = GameEngine(rule: event.rule);
+      _saveState();
+      emit(_buildInProgressState());
+    }
+  }
+
+  void _onSocketMessageReceived(SocketMessageReceived event, Emitter<GameState> emit) {
+    final dynamic msgRaw = event.message;
+    final msg = jsonDecode(msgRaw is String ? msgRaw : utf8.decode(msgRaw));
+
+    if (msg['type'] == 'MATCH_FOUND') {
+      _myPlayer = msg['color'] == 'X' ? Player.x : Player.o;
+      _engine = GameEngine(rule: GameRule.standard);
+      emit(_buildInProgressState());
+    } else if (msg['type'] == 'MOVE_MADE') {
+      final pos = Position(x: msg['x'], y: msg['y']);
+      if (_engine != null && _engine!.currentPlayer != _myPlayer) {
+        _engine!.placePiece(pos);
+        if (_engine!.isGameOver) {
+          emit(GameOver(board: _engine!.board, winner: _engine!.winner, rule: _engine!.rule));
+        } else {
+          emit(_buildInProgressState());
+        }
+      }
+    }
   }
 
   Future<void> _onLoadSavedGame(LoadSavedGame event, Emitter<GameState> emit) async {
@@ -151,8 +206,19 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   void _onPlacePiece(PlacePiece event, Emitter<GameState> emit) {
     if (_engine == null) return;
     
+    // Prevent move if it's not my turn in online mode
+    if (_mode == GameMode.online && _engine!.currentPlayer != _myPlayer) return;
+
     final success = _engine!.placePiece(event.position);
     if (success) {
+      if (_mode == GameMode.online) {
+        _socketService.send({
+          'type': 'MOVE',
+          'x': event.position.x,
+          'y': event.position.y,
+        });
+      }
+
       _saveState();
       if (_engine!.isGameOver) {
         emit(GameOver(
@@ -172,24 +238,19 @@ class GameBloc extends Bloc<GameEvent, GameState> {
 
   Future<void> _onAIMoveRequested(AIMoveRequested event, Emitter<GameState> emit) async {
     emit(GameAIThinking());
-    
-    final move = await _aiService.getBestMove(
-      _engine!.board, 
-      Player.o, 
-      difficulty: _difficulty,
-    );
-    
+    final move = await _aiService.getBestMove(_engine!.board, Player.o, difficulty: _difficulty);
     add(PlacePiece(move));
   }
 
   void _onResetGame(ResetGame event, Emitter<GameState> emit) {
     _engine = null;
     _repository.clearGame();
+    _socketService.disconnect();
     emit(GameInitial());
   }
   
   void _onUndoMove(UndoMove event, Emitter<GameState> emit) {
-    if (_engine == null) return;
+    if (_engine == null || _mode == GameMode.online) return;
     if (_engine!.undo()) {
        _saveState();
        emit(_buildInProgressState());
@@ -197,15 +258,11 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   }
   
   void _onRedoMove(RedoMove event, Emitter<GameState> emit) {
-    if (_engine == null) return;
+    if (_engine == null || _mode == GameMode.online) return;
     if (_engine!.redo()) {
        _saveState();
        if (_engine!.isGameOver) {
-        emit(GameOver(
-          board: _engine!.board,
-          winner: _engine!.winner,
-          rule: _engine!.rule,
-        ));
+        emit(GameOver(board: _engine!.board, winner: _engine!.winner, rule: _engine!.rule));
       } else {
         emit(_buildInProgressState());
       }
@@ -213,7 +270,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   }
 
   void _saveState() {
-    if (_engine != null) {
+    if (_engine != null && _mode != GameMode.online) {
       _repository.saveGame(_engine!.rule, _engine!.history, mode: _mode, difficulty: _difficulty);
     }
   }
@@ -225,6 +282,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       rule: _engine!.rule,
       mode: _mode,
       difficulty: _difficulty,
+      myPlayer: _myPlayer,
       canUndo: _engine!.canUndo,
       canRedo: _engine!.canRedo,
     );

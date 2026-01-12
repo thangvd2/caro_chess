@@ -11,6 +11,7 @@ enum GameRule {
 enum GameMode {
   localPvP,
   vsAI,
+  online,
 }
 
 class Position extends Equatable {
