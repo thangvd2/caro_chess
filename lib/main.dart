@@ -7,6 +7,7 @@ import 'ui/rule_selector_widget.dart';
 import 'ui/rule_guidelines_widget.dart';
 import 'ui/profile_screen.dart';
 import 'ui/victory_overlay.dart';
+import 'ui/shake_widget.dart';
 import 'models/user_profile.dart';
 
 void main() {
@@ -66,17 +67,24 @@ class GamePage extends StatelessWidget {
       ),
       body: Stack(
         children: [
-          const Center(
+          Center(
             child: SingleChildScrollView(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  RuleSelectorWidget(),
-                  RuleGuidelinesWidget(),
-                  SizedBox(height: 10),
-                  GameControlsWidget(),
-                  SizedBox(height: 20),
-                  GameBoardWidget(),
+                  const RuleSelectorWidget(),
+                  const RuleGuidelinesWidget(),
+                  const SizedBox(height: 10),
+                  const GameControlsWidget(),
+                  const SizedBox(height: 20),
+                  BlocBuilder<GameBloc, GameState>(
+                    builder: (context, state) {
+                      return ShakeWidget(
+                        shouldShake: state is GameOver && state.winner != null,
+                        child: const GameBoardWidget(),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),

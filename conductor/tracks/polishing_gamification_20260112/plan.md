@@ -26,7 +26,7 @@
 - [x] **Task 1: Particle Effects** 2b9a45f
     - Add `confetti` library.
     - Trigger particle explosion on victory.
-- [ ] **Task 2: Haptics & Screen Shake**
+- [~] **Task 2: Haptics & Screen Shake**
     - Add `HapticFeedback` on placement.
     - Implement screen shake on winning move.
 - [ ] **Task: Conductor - User Manual Verification 'Juice and Feedback' (Protocol in workflow.md)**

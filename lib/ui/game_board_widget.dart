@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/services.dart';
 import '../bloc/game_bloc.dart';
 import '../models/game_models.dart';
 
@@ -36,6 +37,7 @@ class GameBoardWidget extends StatelessWidget {
                   cell: cell,
                   isHighlighted: isHighlighted,
                   onTap: () {
+                    HapticFeedback.lightImpact();
                     context.read<GameBloc>().add(PlacePiece(Position(x: x, y: y)));
                   },
                 );
