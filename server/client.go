@@ -23,7 +23,9 @@ var upgrader = websocket.Upgrader{
 }
 
 type Client struct {
+	ID   string
 	hub  *Hub
+	mm   *Matchmaker
 	conn *websocket.Conn
 	send chan []byte
 }
@@ -54,6 +56,8 @@ func (c *Client) readPump() {
 					"y":    msg["y"],
 				})
 				c.hub.broadcast <- resp
+			} else if msg["type"] == "WIN_CLAIM" {
+				c.mm.endGame(c)
 			} else {
 				c.hub.broadcast <- message
 			}
@@ -99,13 +103,13 @@ func (c *Client) writePump() {
 	}
 }
 
-func serveWs(hub *Hub, mm *Matchmaker, w http.ResponseWriter, r *http.Request) {
+func serveWs(hub *Hub, mm *Matchmaker, w http.ResponseWriter, r *http.Request, id string) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
+	client := &Client{ID: id, hub: hub, mm: mm, conn: conn, send: make(chan []byte, 256)}
 	client.hub.register <- client
 	mm.addClient <- client
 

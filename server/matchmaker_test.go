@@ -1,12 +1,18 @@
 package main
 
 import (
+	"os"
 	"testing"
 	"time"
+	
+	"caro_chess_server/db"
 )
 
 func TestMatchmaking(t *testing.T) {
-	mm := newMatchmaker()
+	repo := db.NewFileUserRepository("test_mm.json")
+	defer os.Remove("test_mm.json")
+	
+	mm := newMatchmaker(repo)
 	go mm.run()
 
 	c1 := &Client{send: make(chan []byte, 10)}

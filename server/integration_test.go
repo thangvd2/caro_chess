@@ -7,17 +7,20 @@ import (
 	"strings"
 	"testing"
 
+	"caro_chess_server/db"
 	"github.com/gorilla/websocket"
 )
 
 func TestFullGameLoop(t *testing.T) {
+	repo := db.NewFileUserRepository("test_game_loop.json")
+	
 	hub := newHub()
 	go hub.run()
-	mm := newMatchmaker()
+	mm := newMatchmaker(repo)
 	go mm.run()
 
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		serveWs(hub, mm, w, r)
+		serveWs(hub, mm, w, r, "test_user")
 	}))
 	defer s.Close()
 
