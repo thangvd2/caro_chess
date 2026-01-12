@@ -1,0 +1,8 @@
+{
+  "track_id": "core_game_engine_20260112",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-01-12T19:40:00Z",
+  "updated_at": "2026-01-12T19:40:00Z",
+  "description": "Build the fundamental Flutter game board, implement the 3 rule variations (Standard, Caro, Free-style) with explanatory guides, and enable fully functional Local PvP (Pass & Play) to verify the core mechanics before adding online complexity."
+}
