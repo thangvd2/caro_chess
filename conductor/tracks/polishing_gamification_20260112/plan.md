@@ -12,14 +12,14 @@
     - Update UI listeners to trigger sounds on piece placement and game end.
 - [x] **Task: Conductor - User Manual Verification 'Audio System' (Protocol in workflow.md)**
 
-## Phase 2: Piece & Win Animations
+## Phase 2: Piece & Win Animations [checkpoint: 9679938]
 
 - [x] **Task 1: Animate Board Pieces** 96e7ae7
     - Update `BoardCell` to include scale/fade animation on creation.
 - [x] **Task 2: Implement Win Visualization** 763dfff
     - Add a visual highlight for the winning line.
     - Implement celebration overlay.
-- [ ] **Task: Conductor - User Manual Verification 'Piece & Win Animations' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Piece & Win Animations' (Protocol in workflow.md)**
 
 ## Phase 3: "Juice" and Feedback
 
