@@ -28,7 +28,7 @@ This plan outlines the steps to implement the core game engine and local multipl
 - [x] **Task 1: Set up GameBloc for State Management** 9c60e5f
     - Write tests for `GameBloc` events and state transitions.
     - Implement the Bloc to coordinate engine logic and UI.
-- [ ] **Task 2: Build Basic Board UI**
+- [x] **Task 2: Build Basic Board UI** f49e7c3
     - Create `GameBoard` and `BoardCell` widgets.
     - Connect UI interactions to `GameBloc`.
 - [ ] **Task 3: Implement Game Info and Controls**
