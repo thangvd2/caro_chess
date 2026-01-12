@@ -4,7 +4,7 @@ This plan outlines the steps to implement the core game engine and local multipl
 
 ## Phase 1: Game Engine Logic (Pure Dart)
 
-- [ ] **Task 1: Define Game Models and Basic State**
+- [x] **Task 1: Define Game Models and Basic State** 1238e4d
     - Create `GameBoard`, `Cell`, `Position`, and `Player` models.
 - [ ] **Task 2: Implement Move Validation and Turn Logic**
     - Write unit tests for placing pieces and switching turns.
