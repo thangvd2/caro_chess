@@ -20,7 +20,7 @@
 - [x] **Task 1: Implement WebSocket Service** 9348c9f
     - Create `WebSocketService` in Flutter to connect to server.
     - Implement JSON serialization for game messages.
-- [~] **Task 2: Update GameBloc for Online Play**
+- [x] **Task 2: Update GameBloc for Online Play** 50bb4cd
     - Add `GameMode.online`.
     - Handle socket events (`MATCH_FOUND`, `MOVE_MADE`).
 - [ ] **Task: Conductor - User Manual Verification 'Flutter Client Networking' (Protocol in workflow.md)**
