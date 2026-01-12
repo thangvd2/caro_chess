@@ -24,11 +24,11 @@
     - Design and implement visual tier badges.
 - [x] **Task: Conductor - User Manual Verification 'Client Profile & Visual Tiers' (Protocol in workflow.md)**
 
-## Phase 3: Synchronization & Final Integration
+## Phase 3: Synchronization & Final Integration [checkpoint: 3a49707]
 
 - [x] **Task 1: Profile Sync via WebSocket** 41d8fbb
     - Add socket events to fetch and push profile data.
     - Update client state when rank changes.
 - [x] **Task 2: End-to-End Testing** 9a2da6c
     - Verify that finishing an online match updates the player's profile correctly in the UI.
-- [ ] **Task: Conductor - User Manual Verification 'Synchronization & Final Integration' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Synchronization & Final Integration' (Protocol in workflow.md)**
