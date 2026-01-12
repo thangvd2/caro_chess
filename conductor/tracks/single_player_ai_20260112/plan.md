@@ -22,7 +22,7 @@
 
 ## Phase 3: UI Integration
 
-- [~] **Task 1: Update GameBloc for AI Turn**
+- [x] **Task 1: Update GameBloc for AI Turn** cd347b8
     - Add `AIMoveRequested` event and `GameAIThinking` state.
     - Handle AI turn logic in Bloc.
 - [ ] **Task 2: Update Game Controls for Single Player**
