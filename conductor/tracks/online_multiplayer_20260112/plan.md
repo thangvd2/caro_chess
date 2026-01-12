@@ -15,7 +15,7 @@
     - Write unit tests for pairing and game loop.
 - [x] **Task: Conductor - User Manual Verification 'Go Backend Server' (Protocol in workflow.md)**
 
-## Phase 2: Flutter Client Networking
+## Phase 2: Flutter Client Networking [checkpoint: f5123d6]
 
 - [x] **Task 1: Implement WebSocket Service** 9348c9f
     - Create `WebSocketService` in Flutter to connect to server.
@@ -23,7 +23,7 @@
 - [x] **Task 2: Update GameBloc for Online Play** 50bb4cd
     - Add `GameMode.online`.
     - Handle socket events (`MATCH_FOUND`, `MOVE_MADE`).
-- [ ] **Task: Conductor - User Manual Verification 'Flutter Client Networking' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Flutter Client Networking' (Protocol in workflow.md)**
 
 ## Phase 3: Integration & UI
 
