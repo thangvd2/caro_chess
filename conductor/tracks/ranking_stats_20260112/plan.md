@@ -5,7 +5,7 @@
 - [x] **Task 1: Implement ELO Calculator** db95ad7
     - Create `elo.go` with calculation logic.
     - Write unit tests for rating updates.
-- [ ] **Task 2: Setup Database Persistence**
+- [x] **Task 2: Setup Database Persistence** 4640a89
     - Implement a simple repository to save/load user stats.
     - Write unit tests for data persistence.
 - [ ] **Task 3: Integrate with Game Loop**
