@@ -12,7 +12,7 @@ This plan outlines the steps to implement the core game engine and local multipl
 - [x] **Task 3: Implement Win Detection - Standard Gomoku** 50a0f9e
     - Write unit tests for 5-in-a-row (H/V/D).
     - Implement detection logic.
-- [ ] **Task 4: Implement Win Detection - Free-style**
+- [x] **Task 4: Implement Win Detection - Free-style** a72fd2d
     - Write unit tests for overlines (6+ in a row).
     - Implement detection logic.
 - [ ] **Task 5: Implement Win Detection - Vietnamese Caro (Blocked Ends)**
