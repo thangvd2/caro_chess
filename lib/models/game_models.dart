@@ -8,6 +8,11 @@ enum GameRule {
   caro,
 }
 
+enum GameMode {
+  localPvP,
+  vsAI,
+}
+
 class Position extends Equatable {
   final int x;
   final int y;
