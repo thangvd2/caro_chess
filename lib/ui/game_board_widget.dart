@@ -14,6 +14,8 @@ class GameBoardWidget extends StatelessWidget {
           final board = (state is GameInProgress) 
               ? state.board 
               : (state as GameOver).board;
+          
+          final winningLine = (state is GameOver) ? state.winningLine : null;
               
           return AspectRatio(
             aspectRatio: 1.0,
@@ -28,8 +30,11 @@ class GameBoardWidget extends StatelessWidget {
                 final y = index ~/ board.columns;
                 final cell = board.cells[y][x];
                 
+                final isHighlighted = winningLine?.contains(Position(x: x, y: y)) ?? false;
+                
                 return BoardCell(
                   cell: cell,
+                  isHighlighted: isHighlighted,
                   onTap: () {
                     context.read<GameBloc>().add(PlacePiece(Position(x: x, y: y)));
                   },
@@ -47,8 +52,9 @@ class GameBoardWidget extends StatelessWidget {
 class BoardCell extends StatelessWidget {
   final Cell cell;
   final VoidCallback onTap;
+  final bool isHighlighted;
 
-  const BoardCell({super.key, required this.cell, required this.onTap});
+  const BoardCell({super.key, required this.cell, required this.onTap, this.isHighlighted = false});
 
   @override
   Widget build(BuildContext context) {
@@ -56,8 +62,11 @@ class BoardCell extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade300),
-          color: Colors.white,
+          border: Border.all(
+            color: isHighlighted ? Colors.orange : Colors.grey.shade300,
+            width: isHighlighted ? 2 : 1,
+          ),
+          color: isHighlighted ? Colors.orange.withOpacity(0.2) : Colors.white,
         ),
         child: Center(
           child: cell.isEmpty

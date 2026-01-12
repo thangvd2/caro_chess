@@ -100,11 +100,12 @@ class GameOver extends GameState {
   final GameBoard board;
   final Player? winner;
   final GameRule rule;
+  final List<Position>? winningLine;
 
-  const GameOver({required this.board, this.winner, required this.rule});
+  const GameOver({required this.board, this.winner, required this.rule, this.winningLine});
 
   @override
-  List<Object?> get props => [board, winner, rule];
+  List<Object?> get props => [board, winner, rule, winningLine];
 }
 
 // Bloc
@@ -177,7 +178,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         _audioService.playMove();
         if (_engine!.isGameOver) {
           _playWinLoseSound();
-          emit(GameOver(board: _engine!.board, winner: _engine!.winner, rule: _engine!.rule));
+          emit(GameOver(board: _engine!.board, winner: _engine!.winner, rule: _engine!.rule, winningLine: _engine!.winningLine));
         } else {
           emit(_buildInProgressState());
         }
@@ -208,6 +209,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
           board: _engine!.board,
           winner: _engine!.winner,
           rule: _engine!.rule,
+          winningLine: _engine!.winningLine,
         ));
       } else {
         emit(_buildInProgressState());
@@ -239,6 +241,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
           board: _engine!.board,
           winner: _engine!.winner,
           rule: _engine!.rule,
+          winningLine: _engine!.winningLine,
         ));
       } else {
         emit(_buildInProgressState());
@@ -276,7 +279,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     if (_engine!.redo()) {
        _saveState();
        if (_engine!.isGameOver) {
-        emit(GameOver(board: _engine!.board, winner: _engine!.winner, rule: _engine!.rule));
+        emit(GameOver(board: _engine!.board, winner: _engine!.winner, rule: _engine!.rule, winningLine: _engine!.winningLine));
       } else {
         emit(_buildInProgressState());
       }
@@ -290,13 +293,11 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   }
   
   void _playWinLoseSound() {
-    if (_engine!.winner == null) return; // Draw
+    if (_engine!.winner == null) return;
     
     if (_mode == GameMode.localPvP) {
       _audioService.playWin();
     } else {
-      // vsAI: Player is X.
-      // Online: _myPlayer.
       final isWin = _engine!.winner == (_myPlayer ?? Player.x);
       if (isWin) {
         _audioService.playWin();
@@ -306,7 +307,15 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     }
   }
 
-  GameInProgress _buildInProgressState() {
+  GameState _buildInProgressState() {
+    if (_engine!.isGameOver) {
+       return GameOver(
+          board: _engine!.board,
+          winner: _engine!.winner,
+          rule: _engine!.rule,
+          winningLine: _engine!.winningLine,
+        );
+    }
     return GameInProgress(
       board: _engine!.board,
       currentPlayer: _engine!.currentPlayer,

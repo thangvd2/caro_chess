@@ -16,7 +16,7 @@
 
 - [x] **Task 1: Animate Board Pieces** 96e7ae7
     - Update `BoardCell` to include scale/fade animation on creation.
-- [ ] **Task 2: Implement Win Visualization**
+- [~] **Task 2: Implement Win Visualization**
     - Add a visual highlight for the winning line.
     - Implement celebration overlay.
 - [ ] **Task: Conductor - User Manual Verification 'Piece & Win Animations' (Protocol in workflow.md)**
