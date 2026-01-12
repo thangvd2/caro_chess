@@ -1,6 +1,6 @@
 # Track Plan: Single Player AI Integration
 
-## Phase 1: AI Engine Logic (Pure Dart)
+## Phase 1: AI Engine Logic (Pure Dart) [checkpoint: 46b394e]
 
 - [x] **Task 1: Implement Move Generator** 1aa485f
     - Create `MoveGenerator` class to find relevant moves.
@@ -11,7 +11,7 @@
 - [x] **Task 3: Implement Minimax with Alpha-Beta** a6df891
     - Create `MinimaxSolver`.
     - Write unit tests to verify it finds winning moves in simple scenarios.
-- [ ] **Task: Conductor - User Manual Verification 'AI Engine Logic' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'AI Engine Logic' (Protocol in workflow.md)**
 
 ## Phase 2: AI Service & Concurrency
 
