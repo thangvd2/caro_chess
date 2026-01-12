@@ -19,7 +19,7 @@
     - Create `UserProfile` model.
     - Add logic to calculate visual tiers from ELO.
     - Write unit tests for tier thresholds.
-- [ ] **Task 2: Build Profile UI**
+- [x] **Task 2: Build Profile UI** fa4f21b
     - Create a Profile screen.
     - Design and implement visual tier badges.
 - [ ] **Task: Conductor - User Manual Verification 'Client Profile & Visual Tiers' (Protocol in workflow.md)**
