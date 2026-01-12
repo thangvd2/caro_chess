@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-## [~] Track: Single Player AI Integration
-*Link: [./conductor/tracks/single_player_ai_20260112/](./conductor/tracks/single_player_ai_20260112/)*
+## [~] Track: Online Multiplayer Infrastructure
+*Link: [./conductor/tracks/online_multiplayer_20260112/](./conductor/tracks/online_multiplayer_20260112/)*
