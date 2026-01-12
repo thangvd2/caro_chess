@@ -15,7 +15,7 @@
 
 ## Phase 2: Client Profile & Visual Tiers (Flutter)
 
-- [ ] **Task 1: Implement User Models and Tier Logic**
+- [x] **Task 1: Implement User Models and Tier Logic** 77f449e
     - Create `UserProfile` model.
     - Add logic to calculate visual tiers from ELO.
     - Write unit tests for tier thresholds.
