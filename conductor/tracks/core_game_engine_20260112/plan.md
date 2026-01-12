@@ -41,7 +41,7 @@ This plan outlines the steps to implement the core game engine and local multipl
 
 - [x] **Task 1: Rule Selection UI** 51ff41d
     - Implement a way for the user to select the rule set before/during a game.
-- [ ] **Task 2: Rule Explanatory Guidelines**
+- [x] **Task 2: Rule Explanatory Guidelines** be8e60f
     - Create a modal or info section that displays rules for the selected variation.
 - [ ] **Task 3: Final Integration and Persistence**
     - Ensure local persistence of the game state using `shared_preferences` or similar.
