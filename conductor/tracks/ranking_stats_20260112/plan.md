@@ -1,6 +1,6 @@
 # Track Plan: Ranking and Statistics System
 
-## Phase 1: Backend ELO & Persistence (Go)
+## Phase 1: Backend ELO & Persistence (Go) [checkpoint: edb49da]
 
 - [x] **Task 1: Implement ELO Calculator** db95ad7
     - Create `elo.go` with calculation logic.
@@ -11,7 +11,7 @@
 - [x] **Task 3: Integrate with Game Loop** fe9b6e4
     - Update `GameSession` to trigger ELO updates on match end.
     - Write integration tests for end-of-match stats update.
-- [ ] **Task: Conductor - User Manual Verification 'Backend ELO & Persistence' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Backend ELO & Persistence' (Protocol in workflow.md)**
 
 ## Phase 2: Client Profile & Visual Tiers (Flutter)
 
