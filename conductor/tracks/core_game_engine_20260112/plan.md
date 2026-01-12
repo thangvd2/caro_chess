@@ -18,7 +18,7 @@ This plan outlines the steps to implement the core game engine and local multipl
 - [x] **Task 5: Implement Win Detection - Vietnamese Caro (Blocked Ends)** 991ca30
     - Write unit tests for the "blocked at both ends" edge case.
     - Implement the specific Vietnamese Caro logic.
-- [ ] **Task 6: Implement Undo/Redo Functionality**
+- [x] **Task 6: Implement Undo/Redo Functionality** ab70e4c
     - Write unit tests for the move history stack.
     - Implement undo/redo logic.
 - [ ] **Task: Conductor - User Manual Verification 'Game Engine Logic' (Protocol in workflow.md)**
