@@ -11,7 +11,7 @@
 
 ## Phase 2: Frontend Chat UI (Flutter)
 
-- [ ] **Task 1: Create Chat Models & UI Components**
+- [x] **Task 1: Create Chat Models & UI Components** 4e57303
     - Define `ChatMessage` model in Dart.
     - Build `ChatOverlay` or `ChatPanel` widget.
 - [ ] **Task 2: Integrate with GameBloc**
