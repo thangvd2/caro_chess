@@ -1,6 +1,6 @@
 # Track Plan: Cosmetic Store & Monetization
 
-## Phase 1: Models & Persistence
+## Phase 1: Models & Persistence [checkpoint: 916cc13]
 
 - [x] **Task 1: Implement Cosmetic Models** 9f0cc80
     - Create `SkinItem` and `Inventory` models.
@@ -8,7 +8,7 @@
     - Update `GameRepository` to save/load coins and owned skins.
 - [x] **Task 3: Reward Logic** ac28631
     - Update `GameBloc` to award coins at the end of a match.
-- [ ] **Task: Conductor - User Manual Verification 'Models & Persistence' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Models & Persistence' (Protocol in workflow.md)**
 
 ## Phase 2: Store UI
 
