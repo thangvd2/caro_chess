@@ -21,8 +21,8 @@
     - Create `WaitingRoomWidget` to show the code while waiting.
 - [x] **Task: Conductor - User Manual Verification 'Frontend Integration' (Protocol in workflow.md)**
 
-## Phase 3: Final Verification
+## Phase 3: Final Verification [checkpoint: 43abc97]
 
 - [x] **Task 1: End-to-End Testing** 1dd2eb4
     - Verify creating a room on Client A and joining with Client B works.
-- [ ] **Task: Conductor - User Manual Verification 'Final Verification' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Final Verification' (Protocol in workflow.md)**
