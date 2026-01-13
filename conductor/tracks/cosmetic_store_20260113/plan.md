@@ -14,7 +14,7 @@
 
 - [x] **Task 1: Build Store Screen** eed2e31
     - Create a list of available skins with buy/equip buttons.
-- [ ] **Task 2: Implement Purchase Logic**
+- [x] **Task 2: Implement Purchase Logic** 71661ca
     - Add Bloc events for purchasing and equipping items.
 - [ ] **Task: Conductor - User Manual Verification 'Store UI' (Protocol in workflow.md)**
 
