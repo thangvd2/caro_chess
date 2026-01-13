@@ -27,6 +27,7 @@ void main() {
         mode: GameMode.localPvP,
         difficulty: AIDifficulty.medium,
         inventory: const Inventory(),
+        messages: const [],
       ));
 
       await tester.pumpWidget(
@@ -49,6 +50,7 @@ void main() {
         mode: GameMode.localPvP,
         difficulty: AIDifficulty.medium,
         inventory: const Inventory(),
+        messages: const [],
       ));
 
       await tester.pumpWidget(

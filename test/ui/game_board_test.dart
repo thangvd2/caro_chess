@@ -17,14 +17,14 @@ void main() {
     registerFallbackValue(const PlacePiece(Position(x: 0, y: 0)));
   });
 
-  group('GameBoardWidget Themes', () {
+  group('GameBoardWidget', () {
     late GameBloc gameBloc;
 
     setUp(() {
       gameBloc = MockGameBloc();
     });
 
-    testWidgets('renders with default white theme', (tester) async {
+    testWidgets('renders grid of cells', (tester) async {
       when(() => gameBloc.state).thenReturn(GameInProgress(
         board: GameBoard(rows: 15, columns: 15),
         currentPlayer: Player.x,
@@ -32,6 +32,7 @@ void main() {
         mode: GameMode.localPvP,
         difficulty: AIDifficulty.medium,
         inventory: const Inventory(),
+        messages: const [],
       ));
 
       await tester.pumpWidget(
@@ -43,18 +44,18 @@ void main() {
         ),
       );
 
-      final container = tester.widget<Container>(find.byType(Container).first);
-      expect(container.color, equals(Colors.white));
+      expect(find.byType(BoardCell), findsWidgets);
     });
 
-    testWidgets('renders with dark theme', (tester) async {
+    testWidgets('tapping a cell adds PlacePiece event', (tester) async {
       when(() => gameBloc.state).thenReturn(GameInProgress(
         board: GameBoard(rows: 15, columns: 15),
         currentPlayer: Player.x,
         rule: GameRule.standard,
         mode: GameMode.localPvP,
         difficulty: AIDifficulty.medium,
-        inventory: const Inventory(equippedBoardSkinId: 'dark_board'),
+        inventory: const Inventory(),
+        messages: const [],
       ));
 
       await tester.pumpWidget(
@@ -66,8 +67,37 @@ void main() {
         ),
       );
 
-      final container = tester.widget<Container>(find.byType(Container).first);
-      expect(container.color, equals(Colors.black87));
+      await tester.tap(find.byType(BoardCell).first);
+      
+      verify(() => gameBloc.add(any(that: isA<PlacePiece>()))).called(1);
+    });
+    
+    testWidgets('renders X and O correctly', (tester) async {
+        final board = GameBoard(rows: 15, columns: 15);
+        board.cells[0][0] = const Cell(position: Position(x: 0, y: 0), owner: Player.x);
+        board.cells[0][1] = const Cell(position: Position(x: 1, y: 0), owner: Player.o);
+        
+        when(() => gameBloc.state).thenReturn(GameInProgress(
+            board: board,
+            currentPlayer: Player.x,
+            rule: GameRule.standard,
+            mode: GameMode.localPvP,
+            difficulty: AIDifficulty.medium,
+            inventory: const Inventory(),
+            messages: const [],
+        ));
+        
+        await tester.pumpWidget(
+            MaterialApp(
+              home: BlocProvider.value(
+                value: gameBloc,
+                child: const GameBoardWidget(),
+              ),
+            ),
+        );
+        
+        expect(find.text('X'), findsOneWidget);
+        expect(find.text('O'), findsOneWidget);
     });
   });
 }

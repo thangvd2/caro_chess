@@ -6,12 +6,12 @@ import 'ui/game_controls_widget.dart';
 import 'ui/rule_selector_widget.dart';
 import 'ui/rule_guidelines_widget.dart';
 import 'ui/profile_screen.dart';
+import 'ui/store_screen.dart';
 import 'ui/victory_overlay.dart';
 import 'ui/shake_widget.dart';
+import 'ui/chat_panel.dart';
 import 'models/user_profile.dart';
 import 'models/cosmetics.dart';
-
-import 'ui/store_screen.dart';
 
 void main() {
   runApp(const CaroChessApp());
@@ -108,6 +108,18 @@ class GamePage extends StatelessWidget {
                         shouldShake: state is GameOver && state.winner != null,
                         child: const GameBoardWidget(),
                       );
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  BlocBuilder<GameBloc, GameState>(
+                    builder: (context, state) {
+                      if (state is GameInProgress) {
+                        return ChatPanel(
+                          messages: state.messages,
+                          onSend: (text) => context.read<GameBloc>().add(SendChatMessage(text)),
+                        );
+                      }
+                      return const SizedBox.shrink();
                     },
                   ),
                 ],
