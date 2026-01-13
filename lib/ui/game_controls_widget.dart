@@ -49,7 +49,7 @@ class _GameControlsWidgetState extends State<GameControlsWidget> {
                     onPressed: () => context.read<GameBloc>().add(const StartGame(mode: GameMode.localPvP)),
                     child: const Text('Local PvP'),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 16),
                   ElevatedButton(
                     onPressed: () => context.read<GameBloc>().add(StartGame(
                           mode: GameMode.vsAI,
@@ -57,10 +57,25 @@ class _GameControlsWidgetState extends State<GameControlsWidget> {
                         )),
                     child: const Text('Play vs AI'),
                   ),
-                  const SizedBox(width: 8),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
                   ElevatedButton(
                     onPressed: () => context.read<GameBloc>().add(const StartGame(mode: GameMode.online)),
-                    child: const Text('Play Online'),
+                    child: const Text('Quick Match'),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () => context.read<GameBloc>().add(StartRoomCreation()),
+                    child: const Text('Create Room'),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () => _showJoinRoomDialog(context),
+                    child: const Text('Join Room'),
                   ),
                 ],
               ),
@@ -74,6 +89,26 @@ class _GameControlsWidgetState extends State<GameControlsWidget> {
               CircularProgressIndicator(),
               SizedBox(height: 8),
               Text("Finding match..."),
+            ],
+          );
+        }
+
+        if (state is GameWaitingInRoom) {
+          return Column(
+            children: [
+              const Text("Waiting for opponent...", style: TextStyle(fontSize: 18)),
+              const SizedBox(height: 8),
+              SelectableText(
+                "ROOM CODE: ${state.code}",
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue),
+              ),
+              const SizedBox(height: 16),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => context.read<GameBloc>().add(ResetGame()),
+                child: const Text('Cancel'),
+              ),
             ],
           );
         }
@@ -122,6 +157,37 @@ class _GameControlsWidgetState extends State<GameControlsWidget> {
             ),
             const SizedBox(height: 8),
             ElevatedButton(onPressed: onReset, child: const Text('Reset Game')),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showJoinRoomDialog(BuildContext context) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text("Join Private Room"),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(hintText: "Enter 4-character code"),
+            autofocus: true,
+            maxLength: 4,
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text("Cancel")),
+            ElevatedButton(
+              onPressed: () {
+                final code = controller.text.toUpperCase();
+                if (code.length == 4) {
+                  context.read<GameBloc>().add(JoinRoomRequested(code));
+                  Navigator.pop(dialogContext);
+                }
+              },
+              child: const Text("Join"),
+            ),
           ],
         );
       },

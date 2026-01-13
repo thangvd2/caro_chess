@@ -44,7 +44,7 @@ void main() {
       expect(find.byType(DropdownButton<AIDifficulty>), findsOneWidget);
     });
 
-    testWidgets('shows Play Online button in Initial state', (tester) async {
+    testWidgets('shows Room buttons in Initial state', (tester) async {
       when(() => gameBloc.state).thenReturn(GameInitial());
 
       await tester.pumpWidget(
@@ -58,11 +58,12 @@ void main() {
         ),
       );
 
-      expect(find.text('Play Online'), findsOneWidget);
+      expect(find.text('Create Room'), findsOneWidget);
+      expect(find.text('Join Room'), findsOneWidget);
     });
 
-    testWidgets('shows finding match indicator', (tester) async {
-      when(() => gameBloc.state).thenReturn(GameFindingMatch());
+    testWidgets('shows code in Waiting state', (tester) async {
+      when(() => gameBloc.state).thenReturn(const GameWaitingInRoom('ABCD'));
 
       await tester.pumpWidget(
         MaterialApp(
@@ -75,8 +76,8 @@ void main() {
         ),
       );
 
-      expect(find.textContaining('Finding match'), findsOneWidget);
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.textContaining('ABCD'), findsOneWidget);
+      expect(find.textContaining('Waiting for opponent'), findsOneWidget);
     });
 
     testWidgets('shows thinking indicator', (tester) async {
