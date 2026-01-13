@@ -23,6 +23,6 @@
 
 ## Phase 3: Final Verification
 
-- [ ] **Task 1: End-to-End Testing**
+- [~] **Task 1: End-to-End Testing**
     - Verify creating a room on Client A and joining with Client B works.
 - [ ] **Task: Conductor - User Manual Verification 'Final Verification' (Protocol in workflow.md)**
