@@ -6,7 +6,7 @@
     - Create `SkinItem` and `Inventory` models.
 - [x] **Task 2: Currency & Inventory Repository** 452a796
     - Update `GameRepository` to save/load coins and owned skins.
-- [ ] **Task 3: Reward Logic**
+- [x] **Task 3: Reward Logic** ac28631
     - Update `GameBloc` to award coins at the end of a match.
 - [ ] **Task: Conductor - User Manual Verification 'Models & Persistence' (Protocol in workflow.md)**
 
