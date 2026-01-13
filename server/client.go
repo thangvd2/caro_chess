@@ -75,6 +75,12 @@ func (c *Client) readPump() {
 					session, _ := c.rm.getRoom(code)
 					c.mm.startGame(session.ClientX, session.ClientO)
 				}
+			} else if msg["type"] == "CHAT_MESSAGE" {
+				if roomID, ok := msg["room_id"].(string); ok && roomID != "" {
+					c.rm.broadcast(roomID, message)
+				} else {
+					c.hub.broadcast <- message
+				}
 			} else {
 				c.hub.broadcast <- message
 			}

@@ -73,3 +73,16 @@ func (rm *RoomManager) generateCode() string {
 	}
 	return string(b)
 }
+
+func (rm *RoomManager) broadcast(code string, msg []byte) {
+	rm.mu.RLock()
+	defer rm.mu.RUnlock()
+	if session, ok := rm.rooms[code]; ok {
+		if session.ClientX != nil {
+			session.ClientX.send <- msg
+		}
+		if session.ClientO != nil {
+			session.ClientO.send <- msg
+		}
+	}
+}
