@@ -9,7 +9,7 @@
     - Add `broadcastToRoom` method to `Matchmaker` or update `Hub`.
 - [x] **Task: Conductor - User Manual Verification 'Backend Chat Logic' (Protocol in workflow.md)**
 
-## Phase 2: Frontend Chat UI (Flutter)
+## Phase 2: Frontend Chat UI (Flutter) [checkpoint: bfcdee2]
 
 - [x] **Task 1: Create Chat Models & UI Components** 4e57303
     - Define `ChatMessage` model in Dart.
@@ -17,7 +17,7 @@
 - [x] **Task 2: Integrate with GameBloc** e87b1ad
     - Update `GameBloc` to manage message history.
     - Update `WebSocketService` to handle chat events.
-- [ ] **Task: Conductor - User Manual Verification 'Frontend Chat UI' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Frontend Chat UI' (Protocol in workflow.md)**
 
 ## Phase 3: Final Verification
 
