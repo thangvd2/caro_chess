@@ -1,6 +1,6 @@
 # Track Plan: Private Rooms and Match Codes
 
-## Phase 1: Backend Room Logic (Go)
+## Phase 1: Backend Room Logic (Go) [checkpoint: acf4b8c]
 
 - [x] **Task 1: Implement Room Manager** 06249e5
     - Create `RoomManager` struct to store private sessions by code.
@@ -9,7 +9,7 @@
 - [x] **Task 2: Update Protocol Handlers** 8f6986b
     - Update `Client.readPump` to handle `CREATE_ROOM` and `JOIN_ROOM`.
     - Integrate `RoomManager` into `main.go`.
-- [ ] **Task: Conductor - User Manual Verification 'Backend Room Logic' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Backend Room Logic' (Protocol in workflow.md)**
 
 ## Phase 2: Frontend Integration (Flutter)
 
