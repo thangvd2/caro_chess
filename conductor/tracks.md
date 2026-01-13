@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-## [~] Track: Polishing & Gamification
-*Link: [./conductor/tracks/polishing_gamification_20260112/](./conductor/tracks/polishing_gamification_20260112/)*
+## [~] Track: Private Rooms and Match Codes
+*Link: [./conductor/tracks/private_rooms_20260113/](./conductor/tracks/private_rooms_20260113/)*

@@ -17,6 +17,12 @@
 - **Library:** [shared_preferences](https://pub.dev/packages/shared_preferences)
 - **Rationale:** Used to persist game state (move history and active rule set) locally on the device, allowing users to resume games after closing the app.
 
+## Audio & Visual Effects
+- **Audio:** [audioplayers](https://pub.dev/packages/audioplayers)
+- **Rationale:** Chosen for its simplicity and cross-platform support to handle sound effects (move, win, lose).
+- **Particles:** [confetti](https://pub.dev/packages/confetti)
+- **Rationale:** Provides a performant way to render celebration effects (victory confetti) on the UI layer.
+
 ## Testing & Quality
 - **Framework:** [Flutter Test](https://docs.flutter.dev/cookbook/testing/unit/introduction) with [Mockito](https://pub.dev/packages/mockito)
 - **Strategy:** Prioritize unit tests for the game engine (win detection logic) and widget tests for core UI components.
