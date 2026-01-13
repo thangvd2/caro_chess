@@ -10,13 +10,13 @@
     - Update `GameBloc` to award coins at the end of a match.
 - [x] **Task: Conductor - User Manual Verification 'Models & Persistence' (Protocol in workflow.md)**
 
-## Phase 2: Store UI
+## Phase 2: Store UI [checkpoint: 3f2636b]
 
 - [x] **Task 1: Build Store Screen** eed2e31
     - Create a list of available skins with buy/equip buttons.
 - [x] **Task 2: Implement Purchase Logic** 71661ca
     - Add Bloc events for purchasing and equipping items.
-- [ ] **Task: Conductor - User Manual Verification 'Store UI' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Store UI' (Protocol in workflow.md)**
 
 ## Phase 3: Visual Integration
 
