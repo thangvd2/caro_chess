@@ -354,9 +354,6 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       'sender_id': senderId,
       'room_id': _currentRoomCode,
     });
-    // Add locally
-    _messages.add(ChatMessage(senderId: senderId, text: event.text, timestamp: DateTime.now()));
-    emit(_buildInProgressState());
   }
 
   void _onResetGame(ResetGame event, Emitter<GameState> emit) {

@@ -5,6 +5,8 @@ import (
 	"math/rand"
 	"sync"
 	"time"
+
+	"caro_chess_server/engine"
 )
 
 type RoomManager struct {
@@ -22,7 +24,7 @@ func newRoomManager() *RoomManager {
 func (rm *RoomManager) createRoom(host *Client) (string, error) {
 	rm.mu.Lock()
 	defer rm.mu.Unlock()
-	
+
 	code := rm.generateCode()
 	for {
 		if _, exists := rm.rooms[code]; !exists {
@@ -30,31 +32,52 @@ func (rm *RoomManager) createRoom(host *Client) (string, error) {
 		}
 		code = rm.generateCode()
 	}
-	
+
 	session := &GameSession{
-		ClientX: host,
-		Turn: "X",
+		ClientX:   host,
+		PlayerXID: host.ID,
+		Turn:      "X",
+		Engine:    engine.NewGameEngine(15, 15, engine.RuleStandard),
 	}
-	
+
 	rm.rooms[code] = session
+	host.Session = session
 	return code, nil
 }
 
 func (rm *RoomManager) joinRoom(code string, guest *Client) error {
 	rm.mu.Lock()
 	defer rm.mu.Unlock()
-	
+
 	session, exists := rm.rooms[code]
 	if !exists {
 		return errors.New("room not found")
 	}
-	
+
+	// Check for Reconnect
+	if session.PlayerXID == guest.ID {
+		// Reconnect as Host
+		session.StopDisconnectTimer(true)
+		session.ClientX = guest
+		guest.Session = session
+		return nil
+	}
+	if session.PlayerOID == guest.ID {
+		// Reconnect as Guest
+		session.StopDisconnectTimer(false)
+		session.ClientO = guest
+		guest.Session = session
+		return nil
+	}
+
 	if session.ClientO != nil {
 		return errors.New("room full")
 	}
-	
+
 	session.ClientO = guest
-	
+	session.PlayerOID = guest.ID
+	guest.Session = session
+
 	return nil
 }
 

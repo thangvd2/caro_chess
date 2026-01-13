@@ -1,6 +1,7 @@
 package main
 
 import (
+	"caro_chess_server/engine"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -23,16 +24,76 @@ var upgrader = websocket.Upgrader{
 }
 
 type Client struct {
-	ID   string
-	hub  *Hub
-	mm   *Matchmaker
-	rm   *RoomManager
-	conn *websocket.Conn
-	send chan []byte
+	ID      string
+	hub     *Hub
+	mm      *Matchmaker
+	rm      *RoomManager
+	conn    *websocket.Conn
+	send    chan []byte
+	Session *GameSession
 }
 
 func (c *Client) readPump() {
 	defer func() {
+		// Clean up session reference logic
+		// Clean up session reference logic
+		if c.Session != nil {
+			isX := (c.Session.PlayerXID == c.ID)
+
+			// Start Timer
+			c.Session.StartDisconnectTimer(isX, 2*time.Minute, func() {
+				// Time's up! Forfeit game.
+				// We need to notify the OTHER player if they are still connected.
+				// Or just end game via Matchmaker?
+				// But we are in a background goroutine here.
+				// c.mm.endGame needs winner. If this timer fires, existing player WINS.
+
+				// Need access to Matchmaker or Session methods.
+				// But this callback runs on a Timer thread.
+				// Let's call a safe cleanup function.
+				// Note: c.Session might be modified by other thread?
+				// But we hold pointer.
+
+				// Let's implement timeout handling in Matchmaker for safety/centralization?
+				// Or just:
+				otherClient := c.Session.ClientO
+				if !isX {
+					otherClient = c.Session.ClientX
+				}
+
+				if otherClient != nil {
+					// Notify winner?
+					log.Printf("Session Abandoned by %s. Forfeiting...", c.ID)
+					// Actually, we should trigger endGame with winner = otherClient
+					// But do we have access to Matchmaker instance?
+					// c.mm is available via closure if we use it?
+					// Yes, c is available.
+					c.mm.endGame(otherClient)
+
+					// Broadcast Game Over Abandoned?
+					// endGame updates ELO but doesn't broadcast "Game Over" message usually?
+					// In client.go validation logic, we send GAME_OVER.
+					// We should mimic that.
+
+					msg, _ := json.Marshal(map[string]interface{}{
+						"type":        "GAME_OVER",
+						"winner":      "OPPONENT_ABANDONED", // or UserID
+						"winningLine": nil,
+					})
+					otherClient.send <- msg
+				} else {
+					// Both disconnected? Just log.
+					log.Printf("Session %s fully abandoned.", c.Session.PlayerXID)
+				}
+			})
+
+			if c.Session.ClientX == c {
+				c.Session.ClientX = nil
+			}
+			if c.Session.ClientO == c {
+				c.Session.ClientO = nil
+			}
+		}
 		c.hub.unregister <- c
 		c.conn.Close()
 	}()
@@ -51,12 +112,80 @@ func (c *Client) readPump() {
 		var msg map[string]interface{}
 		if err := json.Unmarshal(message, &msg); err == nil {
 			if msg["type"] == "MOVE" {
-				resp, _ := json.Marshal(map[string]interface{}{
-					"type": "MOVE_MADE",
-					"x":    msg["x"],
-					"y":    msg["y"],
-				})
-				c.hub.broadcast <- resp
+				if c.Session == nil || c.Session.Engine == nil {
+					continue
+				}
+
+				xFloat, okX := msg["x"].(float64)
+				yFloat, okY := msg["y"].(float64)
+				if !okX || !okY {
+					continue
+				}
+				x, y := int(xFloat), int(yFloat)
+
+				// Validate turn
+				isPlayerX := c == c.Session.ClientX
+				isPlayerO := c == c.Session.ClientO
+
+				currentTurn := c.Session.Engine.CurrentPlayer
+
+				isMyTurn := (isPlayerX && currentTurn == engine.PlayerX) || (isPlayerO && currentTurn == engine.PlayerO)
+
+				if !isMyTurn {
+					// Send error? Or just ignore.
+					continue
+				}
+
+				if c.Session.Engine.PlacePiece(engine.Position{X: x, Y: y}) {
+					resp, _ := json.Marshal(map[string]interface{}{
+						"type": "MOVE_MADE",
+						"x":    x,
+						"y":    y,
+					})
+
+					// Send only to players in session
+					if c.Session.ClientX != nil {
+						c.Session.ClientX.send <- resp
+					}
+					if c.Session.ClientO != nil {
+						c.Session.ClientO.send <- resp
+					}
+
+					// Check Game Over
+					if c.Session.Engine.IsGameOver {
+						var winner *Client
+						if c.Session.Engine.Winner != nil {
+							if *c.Session.Engine.Winner == engine.PlayerX {
+								winner = c.Session.ClientX
+							} else {
+								winner = c.Session.ClientO
+							}
+						}
+
+						// Broadcast GAME_OVER
+						resp, _ := json.Marshal(map[string]interface{}{
+							"type": "GAME_OVER",
+							"winner": func() string {
+								if c.Session.Engine.Winner == nil {
+									return "DRAW"
+								}
+								return string(*c.Session.Engine.Winner)
+							}(),
+							"winningLine": c.Session.Engine.WinningLine,
+						})
+
+						if c.Session.ClientX != nil {
+							c.Session.ClientX.send <- resp
+						}
+						if c.Session.ClientO != nil {
+							c.Session.ClientO.send <- resp
+						}
+
+						if winner != nil {
+							c.mm.endGame(winner)
+						}
+					}
+				}
 			} else if msg["type"] == "WIN_CLAIM" {
 				c.mm.endGame(c)
 			} else if msg["type"] == "FIND_MATCH" {
@@ -73,7 +202,19 @@ func (c *Client) readPump() {
 					c.send <- resp
 				} else {
 					session, _ := c.rm.getRoom(code)
-					c.mm.startGame(session.ClientX, session.ClientO)
+
+					// Register with matchmaker to track session/ELO
+					c.mm.RegisterSession(session)
+
+					// Check state
+					if len(session.Engine.History) > 0 {
+						sendGameSync(c, session)
+					} else {
+						// New game or start
+						if session.ClientX != nil && session.ClientO != nil {
+							sendMatchFound(session)
+						}
+					}
 				}
 			} else if msg["type"] == "CHAT_MESSAGE" {
 				if roomID, ok := msg["room_id"].(string); ok && roomID != "" {
@@ -137,4 +278,41 @@ func serveWs(hub *Hub, mm *Matchmaker, rm *RoomManager, w http.ResponseWriter, r
 
 	go client.writePump()
 	go client.readPump()
+}
+
+func sendMatchFound(session *GameSession) {
+	msg1, _ := json.Marshal(map[string]string{"type": "MATCH_FOUND", "color": "X"})
+	if session.ClientX != nil {
+		session.ClientX.send <- msg1
+	}
+
+	msg2, _ := json.Marshal(map[string]string{"type": "MATCH_FOUND", "color": "O"})
+	if session.ClientO != nil {
+		session.ClientO.send <- msg2
+	}
+}
+
+func sendGameSync(c *Client, session *GameSession) {
+	// Reconstruct board for sync? Or simply send history and let client replay?
+	// Sending history is robust.
+	// But client might want full state.
+	// For now, let's send Board State + History.
+
+	// Convert Engine Board to persistable format if needed, OR just send moves.
+	// Sending moves is easiest for client to replay.
+
+	var myColor string
+	if c == session.ClientX {
+		myColor = "X"
+	} else {
+		myColor = "O"
+	}
+
+	resp, _ := json.Marshal(map[string]interface{}{
+		"type":    "GAME_SYNC",
+		"color":   myColor,
+		"history": session.Engine.History,
+		"turn":    session.Engine.CurrentPlayer, // engine holds strict turn
+	})
+	c.send <- resp
 }
