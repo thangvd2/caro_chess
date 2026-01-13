@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import '../config/app_config.dart';
 
 class WebSocketService {
   WebSocketChannel? _channel;
   final String url;
 
-  WebSocketService({this.url = 'ws://localhost:8080/ws'});
+  WebSocketService({String? url}) : url = url ?? AppConfig.serverUrl;
 
   Stream<dynamic> get stream => _channel?.stream ?? const Stream.empty();
 

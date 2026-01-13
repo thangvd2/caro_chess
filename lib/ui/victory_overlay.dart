@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
+import '../config/app_config.dart';
 
 class VictoryOverlay extends StatefulWidget {
   final bool isVisible;
@@ -15,7 +16,7 @@ class _VictoryOverlayState extends State<VictoryOverlay> {
   @override
   void initState() {
     super.initState();
-    _controller = ConfettiController(duration: const Duration(seconds: 3));
+    _controller = ConfettiController(duration: AppConfig.victoryConfettiDuration);
     if (widget.isVisible) _controller.play();
   }
 

@@ -1,13 +1,15 @@
 import 'package:flutter/foundation.dart';
 import '../models/game_models.dart';
+import '../config/app_config.dart';
 import 'evaluation_service.dart';
 import 'minimax_solver.dart';
 import 'move_generator.dart';
 
-enum AIDifficulty { easy, medium, hard }
+// Re-export AIDifficulty for backward compatibility
+export '../config/app_config.dart' show AIDifficulty;
 
 class AIService {
-  Future<Position> getBestMove(GameBoard board, Player player, {AIDifficulty difficulty = AIDifficulty.medium}) async {
+  Future<Position> getBestMove(GameBoard board, Player player, {AIDifficulty difficulty = AppConfig.defaultAIDifficulty}) async {
     return compute(_runMinimax, {
       'board': board,
       'player': player,
@@ -21,18 +23,7 @@ Position _runMinimax(Map<String, dynamic> params) {
   final Player player = params['player'];
   final AIDifficulty difficulty = params['difficulty'];
 
-  int depth = 2;
-  switch (difficulty) {
-    case AIDifficulty.easy:
-      depth = 1;
-      break;
-    case AIDifficulty.medium:
-      depth = 2;
-      break;
-    case AIDifficulty.hard:
-      depth = 4;
-      break;
-  }
+  final depth = AppConfig.aiDepths[difficulty] ?? 2;
 
   final solver = MinimaxSolver(
     evaluator: EvaluationService(),
