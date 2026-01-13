@@ -12,7 +12,7 @@ To build a polished, commercially viable, and high-energy Caro (Gomoku) game tha
 - **Learners:** Students or beginners wanting to master the game mechanics.
 
 ## Core Features
-- **Multiplayer Modes:** Support for both local (same device) and online multiplayer matches.
+- **Multiplayer Modes:** Support for local (same device), random online matchmaking, and private rooms with match codes.
 - **AI Opponent:** An intelligent AI with adjustable difficulty levels to challenge players of all skills.
 - **Game Management:** Comprehensive move history, undo/redo functionality, and game state persistence to resume games later.
 - **Cross-Platform Availability:** Seamless experience across Web, Desktop, and Mobile (iOS/Android).
