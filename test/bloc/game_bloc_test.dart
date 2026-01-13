@@ -10,6 +10,7 @@ import 'package:caro_chess/repositories/game_repository.dart';
 import 'package:caro_chess/ai/ai_service.dart';
 import 'package:caro_chess/services/web_socket_service.dart';
 import 'package:caro_chess/services/audio_service.dart';
+import 'package:caro_chess/ui/store_screen.dart'; // For allSkins
 
 class MockGameRepository extends Mock implements GameRepository {}
 class MockAIService extends Mock implements AIService {}
@@ -91,7 +92,7 @@ void main() {
       ),
       act: (bloc) async {
         bloc.add(const StartGame());
-        // Win game
+        await Future.delayed(Duration.zero);
         for(int i=0; i<5; i++) {
            bloc.add(PlacePiece(Position(x: i, y: 0))); // X
            if (i < 4) bloc.add(PlacePiece(Position(x: i, y: 1))); // O
@@ -102,6 +103,25 @@ void main() {
           any(that: isA<Inventory>().having((i) => i.coins, 'coins', 50))
         )).called(1);
       },
+    );
+
+    blocTest<GameBloc, GameState>(
+      'purchasing item deducts coins and adds to inventory',
+      build: () {
+        when(() => repository.loadInventory()).thenAnswer((_) async => const Inventory(coins: 200));
+        return GameBloc(repository: repository, audioService: audioService);
+      },
+      act: (bloc) async {
+        bloc.add(const StartGame());
+        await Future.delayed(Duration.zero);
+        bloc.add(PurchaseItemRequested(allSkins[0])); // Price 100
+      },
+      skip: 1, 
+      expect: () => [
+        isA<GameInProgress>()
+            .having((s) => s.inventory.coins, 'coins', 100)
+            .having((s) => s.inventory.ownedItemIds, 'owned', contains(allSkins[0].id)),
+      ],
     );
   });
 }
