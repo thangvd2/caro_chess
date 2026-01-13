@@ -61,7 +61,29 @@ class GameBoardWidget extends StatelessWidget {
             ),
           );
         }
-        return const Center(child: Text("Loading..."));
+        
+        // Default / Initial State (Empty Board)
+        return Container(
+          color: Colors.white,
+          child: AspectRatio(
+            aspectRatio: 1.0,
+            child: GridView.builder(
+              itemCount: 15 * 15,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 15,
+              ),
+              itemBuilder: (context, index) {
+                return Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade300),
+                    color: Colors.white,
+                  ),
+                );
+              },
+            ),
+          ),
+        );
       },
     );
   }
