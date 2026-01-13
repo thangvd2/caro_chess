@@ -9,6 +9,9 @@ import 'ui/profile_screen.dart';
 import 'ui/victory_overlay.dart';
 import 'ui/shake_widget.dart';
 import 'models/user_profile.dart';
+import 'models/cosmetics.dart';
+
+import 'ui/store_screen.dart';
 
 void main() {
   runApp(const CaroChessApp());
@@ -43,24 +46,46 @@ class GamePage extends StatelessWidget {
         title: const Text('Caro Chess'),
         actions: [
           Builder(builder: (context) {
-            return IconButton(
-              icon: const Icon(Icons.person),
-              onPressed: () {
-                final state = context.read<GameBloc>().state;
-                UserProfile? profile;
-                if (state is GameInProgress) {
-                  profile = state.userProfile;
-                }
-                
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ProfileScreen(
-                      profile: profile ?? const UserProfile(id: "Local Player"),
-                    ),
-                  ),
-                );
-              },
+            return Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.store),
+                  onPressed: () {
+                    final state = context.read<GameBloc>().state;
+                    Inventory inventory = const Inventory();
+                    if (state is GameInProgress) {
+                      inventory = state.inventory;
+                    } else if (state is GameOver) {
+                      inventory = state.inventory;
+                    }
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => StoreScreen(inventory: inventory),
+                      ),
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.person),
+                  onPressed: () {
+                    final state = context.read<GameBloc>().state;
+                    UserProfile? profile;
+                    if (state is GameInProgress) {
+                      profile = state.userProfile;
+                    }
+                    
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ProfileScreen(
+                          profile: profile ?? const UserProfile(id: "Local Player"),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
             );
           }),
         ],
