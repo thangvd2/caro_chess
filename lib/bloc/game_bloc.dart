@@ -4,6 +4,7 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../models/game_models.dart';
 import '../models/user_profile.dart';
+import '../models/cosmetics.dart';
 import '../engine/game_engine.dart';
 import '../repositories/game_repository.dart';
 import '../ai/ai_service.dart';
@@ -135,6 +136,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   AIDifficulty _difficulty = AIDifficulty.medium;
   Player? _myPlayer;
   UserProfile? _userProfile;
+  Inventory _inventory = const Inventory();
 
   GameBloc({GameRepository? repository, AIService? aiService, WebSocketService? socketService, AudioService? audioService}) 
       : _repository = repository ?? GameRepository(),
@@ -160,10 +162,13 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     return super.close();
   }
 
-  void _onStartGame(StartGame event, Emitter<GameState> emit) {
+  Future<void> _onStartGame(StartGame event, Emitter<GameState> emit) async {
     _mode = event.mode;
     _difficulty = event.difficulty;
     _myPlayer = null;
+    
+    // Load inventory on start
+    _inventory = await _repository.loadInventory();
 
     if (_mode == GameMode.online) {
       emit(GameFindingMatch());
@@ -219,6 +224,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         _audioService.playMove();
         if (_engine!.isGameOver) {
           _playWinLoseSound();
+          _awardCoins();
           emit(GameOver(board: _engine!.board, winner: _engine!.winner, rule: _engine!.rule, winningLine: _engine!.winningLine));
         } else {
           emit(_buildInProgressState());
@@ -233,6 +239,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   }
 
   Future<void> _onLoadSavedGame(LoadSavedGame event, Emitter<GameState> emit) async {
+    _inventory = await _repository.loadInventory();
     final savedData = await _repository.loadGame();
     if (savedData != null) {
       _mode = savedData['mode'] as GameMode;
@@ -278,6 +285,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       _saveState();
       if (_engine!.isGameOver) {
         _playWinLoseSound();
+        _awardCoins();
         emit(GameOver(
           board: _engine!.board,
           winner: _engine!.winner,
@@ -346,6 +354,25 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         _audioService.playLose();
       }
     }
+  }
+  
+  void _awardCoins() {
+    int reward = 0;
+    if (_engine!.winner == null) {
+      reward = 10;
+    } else {
+      bool isWin = false;
+      if (_mode == GameMode.localPvP) {
+        isWin = true; // Award both? For now just give 50
+      } else {
+        isWin = _engine!.winner == (_myPlayer ?? Player.x);
+      }
+      
+      reward = isWin ? 50 : 10;
+    }
+    
+    _inventory = _inventory.addCoins(reward);
+    _repository.saveInventory(_inventory);
   }
 
   GameState _buildInProgressState() {
