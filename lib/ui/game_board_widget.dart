@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/game_bloc.dart';
 import '../models/game_models.dart';
 import '../models/cosmetics.dart';
+import '../config/app_config.dart';
 
 class GameBoardWidget extends StatelessWidget {
   const GameBoardWidget({super.key});
@@ -68,10 +69,10 @@ class GameBoardWidget extends StatelessWidget {
           child: AspectRatio(
             aspectRatio: 1.0,
             child: GridView.builder(
-              itemCount: 15 * 15,
+              itemCount: AppConfig.boardRows * AppConfig.boardColumns,
               physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 15,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: AppConfig.boardColumns,
               ),
               itemBuilder: (context, index) {
                 return Container(

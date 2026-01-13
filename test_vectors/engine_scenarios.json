@@ -1,0 +1,190 @@
+{
+  "scenarios": [
+    {
+      "name": "horizontal_win_standard",
+      "rule": "standard",
+      "moves": [
+        {"x": 7, "y": 7, "player": "X"},
+        {"x": 7, "y": 8, "player": "O"},
+        {"x": 8, "y": 7, "player": "X"},
+        {"x": 8, "y": 8, "player": "O"},
+        {"x": 9, "y": 7, "player": "X"},
+        {"x": 9, "y": 8, "player": "O"},
+        {"x": 10, "y": 7, "player": "X"},
+        {"x": 10, "y": 8, "player": "O"},
+        {"x": 11, "y": 7, "player": "X"}
+      ],
+      "expected": {
+        "winner": "X",
+        "isGameOver": true,
+        "winningLine": [{"x": 7, "y": 7}, {"x": 8, "y": 7}, {"x": 9, "y": 7}, {"x": 10, "y": 7}, {"x": 11, "y": 7}]
+      }
+    },
+    {
+      "name": "vertical_win_standard",
+      "rule": "standard",
+      "moves": [
+        {"x": 7, "y": 7, "player": "X"},
+        {"x": 8, "y": 7, "player": "O"},
+        {"x": 7, "y": 8, "player": "X"},
+        {"x": 8, "y": 8, "player": "O"},
+        {"x": 7, "y": 9, "player": "X"},
+        {"x": 8, "y": 9, "player": "O"},
+        {"x": 7, "y": 10, "player": "X"},
+        {"x": 8, "y": 10, "player": "O"},
+        {"x": 7, "y": 11, "player": "X"}
+      ],
+      "expected": {
+        "winner": "X",
+        "isGameOver": true,
+        "winningLine": [{"x": 7, "y": 7}, {"x": 7, "y": 8}, {"x": 7, "y": 9}, {"x": 7, "y": 10}, {"x": 7, "y": 11}]
+      }
+    },
+    {
+      "name": "diagonal_win_standard",
+      "rule": "standard",
+      "moves": [
+        {"x": 7, "y": 7, "player": "X"},
+        {"x": 7, "y": 8, "player": "O"},
+        {"x": 8, "y": 8, "player": "X"},
+        {"x": 8, "y": 9, "player": "O"},
+        {"x": 9, "y": 9, "player": "X"},
+        {"x": 9, "y": 10, "player": "O"},
+        {"x": 10, "y": 10, "player": "X"},
+        {"x": 10, "y": 11, "player": "O"},
+        {"x": 11, "y": 11, "player": "X"}
+      ],
+      "expected": {
+        "winner": "X",
+        "isGameOver": true,
+        "winningLine": [{"x": 7, "y": 7}, {"x": 8, "y": 8}, {"x": 9, "y": 9}, {"x": 10, "y": 10}, {"x": 11, "y": 11}]
+      }
+    },
+    {
+      "name": "overline_standard_wins",
+      "rule": "standard",
+      "moves": [
+        {"x": 7, "y": 7, "player": "X"},
+        {"x": 7, "y": 8, "player": "O"},
+        {"x": 8, "y": 7, "player": "X"},
+        {"x": 8, "y": 8, "player": "O"},
+        {"x": 9, "y": 7, "player": "X"},
+        {"x": 9, "y": 8, "player": "O"},
+        {"x": 10, "y": 7, "player": "X"},
+        {"x": 10, "y": 8, "player": "O"},
+        {"x": 11, "y": 7, "player": "X"}
+      ],
+      "expected": {
+        "winner": "X",
+        "isGameOver": true,
+        "winningLine": [{"x": 7, "y": 7}, {"x": 8, "y": 7}, {"x": 9, "y": 7}, {"x": 10, "y": 7}, {"x": 11, "y": 7}]
+      }
+    },
+    {
+      "name": "freestyle_wins",
+      "rule": "freestyle",
+      "moves": [
+        {"x": 7, "y": 7, "player": "X"},
+        {"x": 7, "y": 8, "player": "O"},
+        {"x": 8, "y": 7, "player": "X"},
+        {"x": 8, "y": 8, "player": "O"},
+        {"x": 9, "y": 7, "player": "X"},
+        {"x": 9, "y": 8, "player": "O"},
+        {"x": 10, "y": 7, "player": "X"},
+        {"x": 10, "y": 8, "player": "O"},
+        {"x": 11, "y": 7, "player": "X"}
+      ],
+      "expected": {
+        "winner": "X",
+        "isGameOver": true,
+        "winningLine": [{"x": 7, "y": 7}, {"x": 8, "y": 7}, {"x": 9, "y": 7}, {"x": 10, "y": 7}, {"x": 11, "y": 7}]
+      }
+    },
+    {
+      "name": "caro_open_ends_wins",
+      "rule": "caro",
+      "moves": [
+        {"x": 7, "y": 7, "player": "X"},
+        {"x": 7, "y": 8, "player": "O"},
+        {"x": 8, "y": 7, "player": "X"},
+        {"x": 8, "y": 8, "player": "O"},
+        {"x": 9, "y": 7, "player": "X"},
+        {"x": 9, "y": 8, "player": "O"},
+        {"x": 10, "y": 7, "player": "X"},
+        {"x": 10, "y": 8, "player": "O"},
+        {"x": 11, "y": 7, "player": "X"}
+      ],
+      "expected": {
+        "winner": "X",
+        "isGameOver": true,
+        "winningLine": [{"x": 7, "y": 7}, {"x": 8, "y": 7}, {"x": 9, "y": 7}, {"x": 10, "y": 7}, {"x": 11, "y": 7}]
+      }
+    },
+    {
+      "name": "caro_basic_win",
+      "rule": "caro",
+      "moves": [
+        {"x": 7, "y": 7, "player": "X"},
+        {"x": 7, "y": 8, "player": "O"},
+        {"x": 8, "y": 7, "player": "X"},
+        {"x": 8, "y": 8, "player": "O"},
+        {"x": 9, "y": 7, "player": "X"},
+        {"x": 9, "y": 8, "player": "O"},
+        {"x": 10, "y": 7, "player": "X"},
+        {"x": 10, "y": 8, "player": "O"},
+        {"x": 11, "y": 7, "player": "X"}
+      ],
+      "expected": {
+        "winner": "X",
+        "isGameOver": true,
+        "winningLine": [{"x": 7, "y": 7}, {"x": 8, "y": 7}, {"x": 9, "y": 7}, {"x": 10, "y": 7}, {"x": 11, "y": 7}]
+      }
+    },
+    {
+      "name": "invalid_move_out_of_bounds",
+      "rule": "standard",
+      "moves": [
+        {"x": 7, "y": 7, "player": "X"},
+        {"x": 99, "y": 99, "player": "O"}
+      ],
+      "expected": {
+        "winner": null,
+        "isGameOver": false,
+        "lastMoveFailed": true
+      }
+    },
+    {
+      "name": "invalid_move_occupied_cell",
+      "rule": "standard",
+      "moves": [
+        {"x": 7, "y": 7, "player": "X"},
+        {"x": 7, "y": 7, "player": "O"}
+      ],
+      "expected": {
+        "winner": null,
+        "isGameOver": false,
+        "lastMoveFailed": true
+      }
+    },
+    {
+      "name": "anti_diagonal_win",
+      "rule": "standard",
+      "moves": [
+        {"x": 11, "y": 7, "player": "X"},
+        {"x": 6, "y": 8, "player": "O"},
+        {"x": 10, "y": 8, "player": "X"},
+        {"x": 6, "y": 9, "player": "O"},
+        {"x": 9, "y": 9, "player": "X"},
+        {"x": 6, "y": 10, "player": "O"},
+        {"x": 8, "y": 10, "player": "X"},
+        {"x": 6, "y": 11, "player": "O"},
+        {"x": 7, "y": 11, "player": "X"}
+      ],
+      "expected": {
+        "winner": "X",
+        "isGameOver": true,
+        "winningLine": [{"x": 11, "y": 7}, {"x": 10, "y": 8}, {"x": 9, "y": 9}, {"x": 8, "y": 10}, {"x": 7, "y": 11}]
+      }
+    }
+  ]
+}
