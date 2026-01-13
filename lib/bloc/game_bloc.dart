@@ -30,6 +30,14 @@ class StartGame extends GameEvent {
   List<Object?> get props => [rule, mode, difficulty];
 }
 
+class StartRoomCreation extends GameEvent {}
+class JoinRoomRequested extends GameEvent {
+  final String code;
+  const JoinRoomRequested(this.code);
+  @override
+  List<Object?> get props => [code];
+}
+
 class LoadSavedGame extends GameEvent {}
 
 class PlacePiece extends GameEvent {
@@ -68,6 +76,12 @@ abstract class GameState extends Equatable {
 class GameInitial extends GameState {}
 class GameFindingMatch extends GameState {}
 class GameAIThinking extends GameState {}
+class GameWaitingInRoom extends GameState {
+  final String code;
+  const GameWaitingInRoom(this.code);
+  @override
+  List<Object?> get props => [code];
+}
 
 class GameInProgress extends GameState {
   final GameBoard board;
@@ -129,6 +143,8 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         _audioService = audioService ?? AudioService(),
         super(GameInitial()) {
     on<StartGame>(_onStartGame);
+    on<StartRoomCreation>(_onStartRoomCreation);
+    on<JoinRoomRequested>(_onJoinRoomRequested);
     on<LoadSavedGame>(_onLoadSavedGame);
     on<PlacePiece>(_onPlacePiece);
     on<ResetGame>(_onResetGame);
@@ -156,6 +172,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       _socketSubscription = _socketService.stream.listen((msg) {
         add(SocketMessageReceived(msg));
       });
+      _socketService.send({'type': 'FIND_MATCH'});
     } else {
       _engine = GameEngine(rule: event.rule);
       _saveState();
@@ -163,11 +180,35 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     }
   }
 
+  void _onStartRoomCreation(StartRoomCreation event, Emitter<GameState> emit) {
+    _mode = GameMode.online;
+    emit(GameFindingMatch());
+    _socketService.connect();
+    _socketSubscription?.cancel();
+    _socketSubscription = _socketService.stream.listen((msg) {
+      add(SocketMessageReceived(msg));
+    });
+    _socketService.send({'type': 'CREATE_ROOM'});
+  }
+
+  void _onJoinRoomRequested(JoinRoomRequested event, Emitter<GameState> emit) {
+    _mode = GameMode.online;
+    emit(GameFindingMatch());
+    _socketService.connect();
+    _socketSubscription?.cancel();
+    _socketSubscription = _socketService.stream.listen((msg) {
+      add(SocketMessageReceived(msg));
+    });
+    _socketService.send({'type': 'JOIN_ROOM', 'code': event.code});
+  }
+
   void _onSocketMessageReceived(SocketMessageReceived event, Emitter<GameState> emit) {
     final dynamic msgRaw = event.message;
     final msg = jsonDecode(msgRaw is String ? msgRaw : utf8.decode(msgRaw));
 
-    if (msg['type'] == 'MATCH_FOUND') {
+    if (msg['type'] == 'ROOM_CREATED') {
+      emit(GameWaitingInRoom(msg['code']));
+    } else if (msg['type'] == 'MATCH_FOUND') {
       _myPlayer = msg['color'] == 'X' ? Player.x : Player.o;
       _engine = GameEngine(rule: GameRule.standard);
       emit(_buildInProgressState());

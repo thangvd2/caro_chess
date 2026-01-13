@@ -57,22 +57,24 @@ void main() {
     registerFallbackValue(Player.x);
   });
 
-  group('GameBloc', () {
+  group('GameBloc Room Features', () {
     blocTest<GameBloc, GameState>(
-      'plays move sound on PlacePiece success',
+      'emits [GameWaitingInRoom] when ROOM_CREATED received',
       build: () => GameBloc(
-          repository: repository, 
-          aiService: aiService, 
-          socketService: socketService,
-          audioService: audioService
+        repository: repository, 
+        socketService: socketService,
+        audioService: audioService,
+        aiService: aiService,
       ),
-      act: (bloc) {
-        bloc.add(const StartGame());
-        bloc.add(const PlacePiece(Position(x: 0, y: 0)));
+      act: (bloc) async {
+        bloc.add(StartRoomCreation()); 
+        await Future.delayed(const Duration(milliseconds: 10));
+        socketController.add('{"type": "ROOM_CREATED", "code": "ABCD"}');
       },
-      verify: (_) {
-        verify(() => audioService.playMove()).called(1);
-      },
+      expect: () => [
+        isA<GameFindingMatch>(),
+        isA<GameWaitingInRoom>().having((s) => s.code, 'code', 'ABCD'),
+      ],
     );
   });
 }
