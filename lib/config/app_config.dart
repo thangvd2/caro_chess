@@ -17,6 +17,15 @@ class AppConfig {
 
   static const String _defaultServerUrl = 'ws://localhost:8080/ws';
 
+  /// Auth server URL (HTTP)
+  ///
+  /// Supports environment variable override via CARO_CHESS_auth_URL
+  /// Format: http://host:port
+  static String get authUrl =>
+      _fromEnv('CARO_CHESS_AUTH_URL', _defaultAuthUrl);
+
+  static const String _defaultAuthUrl = 'http://localhost:8080';
+
   // ==================== GAME CONFIGURATION ====================
 
   /// Default game board dimensions

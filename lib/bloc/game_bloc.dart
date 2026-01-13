@@ -83,6 +83,13 @@ class EquipItemRequested extends GameEvent {
   List<Object?> get props => [itemId, type];
 }
 
+class UnlockItem extends GameEvent {
+  final String itemId;
+  const UnlockItem(this.itemId);
+  @override
+  List<Object?> get props => [itemId];
+}
+
 class SendChatMessage extends GameEvent {
   final String text;
   const SendChatMessage(this.text);
@@ -132,10 +139,13 @@ class GameInProgress extends GameState {
     this.userProfile,
     this.canUndo = false,
     this.canRedo = false,
+    this.isSpectating = false,
   });
 
+  final bool isSpectating;
+
   @override
-  List<Object?> get props => [board, currentPlayer, rule, mode, difficulty, myPlayer, userProfile, inventory, messages, canUndo, canRedo];
+  List<Object?> get props => [board, currentPlayer, rule, mode, difficulty, myPlayer, userProfile, inventory, messages, canUndo, canRedo, isSpectating];
 }
 
 class GameOver extends GameState {
@@ -186,6 +196,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     on<SocketMessageReceived>(_onSocketMessageReceived);
     on<PurchaseItemRequested>(_onPurchaseItemRequested);
     on<EquipItemRequested>(_onEquipItemRequested);
+    on<UnlockItem>(_onUnlockItem);
     on<SendChatMessage>(_onSendChatMessage);
   }
 
@@ -205,7 +216,8 @@ class GameBloc extends Bloc<GameEvent, GameState> {
 
     if (_mode == GameMode.online) {
       emit(GameFindingMatch());
-      _socketService.connect();
+      final token = await _repository.ensureAuthenticated();
+      _socketService.connect(token: token);
       _socketSubscription?.cancel();
       _socketSubscription = _socketService.stream.listen((msg) {
         add(SocketMessageReceived(msg));
@@ -218,11 +230,12 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     }
   }
 
-  void _onStartRoomCreation(StartRoomCreation event, Emitter<GameState> emit) {
+  Future<void> _onStartRoomCreation(StartRoomCreation event, Emitter<GameState> emit) async {
     _mode = GameMode.online;
     _messages.clear();
     emit(GameFindingMatch());
-    _socketService.connect();
+    final token = await _repository.ensureAuthenticated();
+    _socketService.connect(token: token);
     _socketSubscription?.cancel();
     _socketSubscription = _socketService.stream.listen((msg) {
       add(SocketMessageReceived(msg));
@@ -230,12 +243,13 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     _socketService.send({'type': 'CREATE_ROOM'});
   }
 
-  void _onJoinRoomRequested(JoinRoomRequested event, Emitter<GameState> emit) {
+  Future<void> _onJoinRoomRequested(JoinRoomRequested event, Emitter<GameState> emit) async {
     _mode = GameMode.online;
     _currentRoomCode = event.code;
     _messages.clear();
     emit(GameFindingMatch());
-    _socketService.connect();
+    final token = await _repository.ensureAuthenticated();
+    _socketService.connect(token: token);
     _socketSubscription?.cancel();
     _socketSubscription = _socketService.stream.listen((msg) {
       add(SocketMessageReceived(msg));
@@ -254,21 +268,48 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       _myPlayer = msg['color'] == 'X' ? Player.x : Player.o;
       _engine = GameEngine(rule: GameRule.standard);
       emit(_buildInProgressState());
+    } else if (msg['type'] == 'SPECTATOR_JOINED') {
+      _myPlayer = null; // Spectator
+      _engine = GameEngine(rule: GameRule.standard);
+      
+      // Replay history
+      final List<dynamic> history = msg['history'] ?? [];
+      for (final move in history) {
+          // Check if move is map ({"x":..., "y":...}) or just array/other format
+          // Server sends []Position, so likely list of objects
+          if (move is Map) {
+              _engine!.placePiece(Position(x: move['X'] ?? move['x'], y: move['Y'] ?? move['y']));
+          }
+      }
+      
+      emit(_buildInProgressState(isSpectating: true));
     } else if (msg['type'] == 'MOVE_MADE') {
       final pos = Position(x: msg['x'], y: msg['y']);
-      if (_engine != null && _engine!.currentPlayer != _myPlayer) {
+      // Should we check currentPlayer? 
+      // If we are spectator, myPlayer is null, so currentPlayer != myPlayer is always true (unless null == null, but currentPlayer is enum/object)
+      // Actually currentPlayer is Player.x or Player.o. myPlayer is stored as Player?. 
+      // If myPlayer is null, we always update.
+      
+      if (_engine != null) {
         _engine!.placePiece(pos);
         _audioService.playMove();
         if (_engine!.isGameOver) {
           _playWinLoseSound();
-          _awardCoins();
+          if (_myPlayer != null) _awardCoins(); 
         }
-        emit(_buildInProgressState());
+        // Preserve isSpectating from current state if possible, or infer
+        bool isSpec = false;
+        if (state is GameInProgress) {
+            isSpec = (state as GameInProgress).isSpectating;
+        }
+        emit(_buildInProgressState(isSpectating: isSpec));
       }
     } else if (msg['type'] == 'UPDATE_RANK') {
       _userProfile = UserProfile(id: _userProfile?.id ?? "Player", elo: msg['elo']);
       if (state is GameInProgress || state is GameOver) {
-        emit(_buildInProgressState());
+        bool isSpec = false;
+        if (state is GameInProgress) isSpec = (state as GameInProgress).isSpectating;
+        emit(_buildInProgressState(isSpectating: isSpec));
       }
     } else if (msg['type'] == 'CHAT_MESSAGE') {
       _messages.add(ChatMessage(
@@ -276,7 +317,9 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         text: msg['text'],
         timestamp: DateTime.now(),
       ));
-      emit(_buildInProgressState());
+      bool isSpec = false;
+      if (state is GameInProgress) isSpec = (state as GameInProgress).isSpectating;
+      emit(_buildInProgressState(isSpectating: isSpec));
     }
   }
 
@@ -346,6 +389,14 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     }
   }
 
+  void _onUnlockItem(UnlockItem event, Emitter<GameState> emit) {
+    if (!_inventory.ownedItemIds.contains(event.itemId)) {
+      _inventory = _inventory.addItem(event.itemId);
+      _repository.saveInventory(_inventory);
+      emit(_buildInProgressState());
+    }
+  }
+
   void _onSendChatMessage(SendChatMessage event, Emitter<GameState> emit) {
     final senderId = _userProfile?.id ?? "Player";
     _socketService.send({
@@ -407,7 +458,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     _repository.saveInventory(_inventory);
   }
 
-  GameState _buildInProgressState() {
+  GameState _buildInProgressState({bool isSpectating = false}) {
     if (_engine == null) return GameInitial();
     if (_engine!.isGameOver) {
        return GameOver(
@@ -430,6 +481,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       userProfile: _userProfile,
       canUndo: _engine!.canUndo,
       canRedo: _engine!.canRedo,
+      isSpectating: isSpectating,
     );
   }
 }

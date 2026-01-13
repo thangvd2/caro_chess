@@ -17,16 +17,19 @@ type GameSession struct {
 
 	TimerX *time.Timer
 	TimerO *time.Timer
+
+	Spectators map[*Client]bool
 }
 
 func newGameSession(x, o *Client) *GameSession {
 	return &GameSession{
-		ClientX:   x,
-		ClientO:   o,
-		PlayerXID: x.ID,
-		PlayerOID: o.ID,
-		Turn:      "X",
-		Engine:    engine.NewGameEngine(15, 15, engine.RuleStandard),
+		ClientX:    x,
+		ClientO:    o,
+		PlayerXID:  x.ID,
+		PlayerOID:  o.ID,
+		Turn:       "X",
+		Engine:     engine.NewGameEngine(15, 15, engine.RuleStandard),
+		Spectators: make(map[*Client]bool),
 	}
 }
 
