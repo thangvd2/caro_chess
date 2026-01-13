@@ -4,7 +4,7 @@
 
 - [x] **Task 1: Implement Cosmetic Models** 9f0cc80
     - Create `SkinItem` and `Inventory` models.
-- [ ] **Task 2: Currency & Inventory Repository**
+- [x] **Task 2: Currency & Inventory Repository** 452a796
     - Update `GameRepository` to save/load coins and owned skins.
 - [ ] **Task 3: Reward Logic**
     - Update `GameBloc` to award coins at the end of a match.
