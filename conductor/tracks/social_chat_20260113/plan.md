@@ -14,7 +14,7 @@
 - [x] **Task 1: Create Chat Models & UI Components** 4e57303
     - Define `ChatMessage` model in Dart.
     - Build `ChatOverlay` or `ChatPanel` widget.
-- [ ] **Task 2: Integrate with GameBloc**
+- [x] **Task 2: Integrate with GameBloc** e87b1ad
     - Update `GameBloc` to manage message history.
     - Update `WebSocketService` to handle chat events.
 - [ ] **Task: Conductor - User Manual Verification 'Frontend Chat UI' (Protocol in workflow.md)**
