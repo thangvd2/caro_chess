@@ -5,6 +5,7 @@ import 'package:equatable/equatable.dart';
 import '../models/game_models.dart';
 import '../models/user_profile.dart';
 import '../models/cosmetics.dart';
+import '../models/chat_message.dart';
 import '../engine/game_engine.dart';
 import '../repositories/game_repository.dart';
 import '../ai/ai_service.dart';
@@ -82,6 +83,13 @@ class EquipItemRequested extends GameEvent {
   List<Object?> get props => [itemId, type];
 }
 
+class SendChatMessage extends GameEvent {
+  final String text;
+  const SendChatMessage(this.text);
+  @override
+  List<Object?> get props => [text];
+}
+
 // States
 abstract class GameState extends Equatable {
   const GameState();
@@ -108,6 +116,7 @@ class GameInProgress extends GameState {
   final Player? myPlayer;
   final UserProfile? userProfile;
   final Inventory inventory;
+  final List<ChatMessage> messages;
   final bool canUndo;
   final bool canRedo;
 
@@ -118,6 +127,7 @@ class GameInProgress extends GameState {
     required this.mode,
     required this.difficulty,
     required this.inventory,
+    required this.messages,
     this.myPlayer,
     this.userProfile,
     this.canUndo = false,
@@ -125,7 +135,7 @@ class GameInProgress extends GameState {
   });
 
   @override
-  List<Object?> get props => [board, currentPlayer, rule, mode, difficulty, myPlayer, userProfile, inventory, canUndo, canRedo];
+  List<Object?> get props => [board, currentPlayer, rule, mode, difficulty, myPlayer, userProfile, inventory, messages, canUndo, canRedo];
 }
 
 class GameOver extends GameState {
@@ -155,6 +165,8 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   Player? _myPlayer;
   UserProfile? _userProfile;
   Inventory _inventory = const Inventory();
+  String? _currentRoomCode;
+  final List<ChatMessage> _messages = [];
 
   GameBloc({GameRepository? repository, AIService? aiService, WebSocketService? socketService, AudioService? audioService}) 
       : _repository = repository ?? GameRepository(),
@@ -174,6 +186,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     on<SocketMessageReceived>(_onSocketMessageReceived);
     on<PurchaseItemRequested>(_onPurchaseItemRequested);
     on<EquipItemRequested>(_onEquipItemRequested);
+    on<SendChatMessage>(_onSendChatMessage);
   }
 
   @override
@@ -186,6 +199,8 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     _mode = event.mode;
     _difficulty = event.difficulty;
     _myPlayer = null;
+    _currentRoomCode = null;
+    _messages.clear();
     _inventory = await _repository.loadInventory();
 
     if (_mode == GameMode.online) {
@@ -205,6 +220,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
 
   void _onStartRoomCreation(StartRoomCreation event, Emitter<GameState> emit) {
     _mode = GameMode.online;
+    _messages.clear();
     emit(GameFindingMatch());
     _socketService.connect();
     _socketSubscription?.cancel();
@@ -216,6 +232,8 @@ class GameBloc extends Bloc<GameEvent, GameState> {
 
   void _onJoinRoomRequested(JoinRoomRequested event, Emitter<GameState> emit) {
     _mode = GameMode.online;
+    _currentRoomCode = event.code;
+    _messages.clear();
     emit(GameFindingMatch());
     _socketService.connect();
     _socketSubscription?.cancel();
@@ -230,6 +248,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     final msg = jsonDecode(msgRaw is String ? msgRaw : utf8.decode(msgRaw));
 
     if (msg['type'] == 'ROOM_CREATED') {
+      _currentRoomCode = msg['code'];
       emit(GameWaitingInRoom(msg['code']));
     } else if (msg['type'] == 'MATCH_FOUND') {
       _myPlayer = msg['color'] == 'X' ? Player.x : Player.o;
@@ -243,16 +262,21 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         if (_engine!.isGameOver) {
           _playWinLoseSound();
           _awardCoins();
-          emit(_buildInProgressState());
-        } else {
-          emit(_buildInProgressState());
         }
+        emit(_buildInProgressState());
       }
     } else if (msg['type'] == 'UPDATE_RANK') {
       _userProfile = UserProfile(id: _userProfile?.id ?? "Player", elo: msg['elo']);
       if (state is GameInProgress || state is GameOver) {
         emit(_buildInProgressState());
       }
+    } else if (msg['type'] == 'CHAT_MESSAGE') {
+      _messages.add(ChatMessage(
+        senderId: msg['sender_id'],
+        text: msg['text'],
+        timestamp: DateTime.now(),
+      ));
+      emit(_buildInProgressState());
     }
   }
 
@@ -322,10 +346,25 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     }
   }
 
+  void _onSendChatMessage(SendChatMessage event, Emitter<GameState> emit) {
+    final senderId = _userProfile?.id ?? "Player";
+    _socketService.send({
+      'type': 'CHAT_MESSAGE',
+      'text': event.text,
+      'sender_id': senderId,
+      'room_id': _currentRoomCode,
+    });
+    // Add locally
+    _messages.add(ChatMessage(senderId: senderId, text: event.text, timestamp: DateTime.now()));
+    emit(_buildInProgressState());
+  }
+
   void _onResetGame(ResetGame event, Emitter<GameState> emit) {
     _engine = null;
     _repository.clearGame();
     _socketService.disconnect();
+    _messages.clear();
+    _currentRoomCode = null;
     emit(GameInitial());
   }
   
@@ -389,6 +428,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       mode: _mode,
       difficulty: _difficulty,
       inventory: _inventory,
+      messages: List.from(_messages),
       myPlayer: _myPlayer,
       userProfile: _userProfile,
       canUndo: _engine!.canUndo,

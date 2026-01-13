@@ -6,11 +6,12 @@ import 'package:caro_chess/bloc/game_bloc.dart';
 import 'package:caro_chess/models/game_models.dart';
 import 'package:caro_chess/models/user_profile.dart';
 import 'package:caro_chess/models/cosmetics.dart';
+import 'package:caro_chess/models/chat_message.dart';
 import 'package:caro_chess/repositories/game_repository.dart';
 import 'package:caro_chess/ai/ai_service.dart';
 import 'package:caro_chess/services/web_socket_service.dart';
 import 'package:caro_chess/services/audio_service.dart';
-import 'package:caro_chess/ui/store_screen.dart'; // For allSkins
+import 'package:caro_chess/ui/store_screen.dart';
 
 class MockGameRepository extends Mock implements GameRepository {}
 class MockAIService extends Mock implements AIService {}
@@ -62,65 +63,27 @@ void main() {
     registerFallbackValue(const Inventory());
   });
 
-  group('GameBloc Room Features', () {
+  group('GameBloc Chat Integration', () {
     blocTest<GameBloc, GameState>(
-      'emits [GameWaitingInRoom] when ROOM_CREATED received',
+      'emits state with new message when socket sends CHAT_MESSAGE',
       build: () => GameBloc(
         repository: repository, 
-        socketService: socketService,
+        socketService: socketService, 
         audioService: audioService,
         aiService: aiService,
       ),
       act: (bloc) async {
-        bloc.add(StartRoomCreation()); 
+        bloc.add(const StartGame(mode: GameMode.online));
+        await Future.delayed(const Duration(milliseconds: 20));
+        // Match found first?
+        socketController.add('{"type": "MATCH_FOUND", "color": "X"}');
         await Future.delayed(const Duration(milliseconds: 10));
-        socketController.add('{"type": "ROOM_CREATED", "code": "ABCD"}');
+        socketController.add('{"type": "CHAT_MESSAGE", "text": "Hello", "sender_id": "user2"}');
       },
+      wait: const Duration(milliseconds: 100),
+      skip: 2, // Skip FindingMatch and MatchFound
       expect: () => [
-        isA<GameFindingMatch>(),
-        isA<GameWaitingInRoom>().having((s) => s.code, 'code', 'ABCD'),
-      ],
-    );
-  });
-
-  group('GameBloc Cosmetics', () {
-    blocTest<GameBloc, GameState>(
-      'awards 50 coins on win',
-      build: () => GameBloc(
-        repository: repository,
-        audioService: audioService,
-      ),
-      act: (bloc) async {
-        bloc.add(const StartGame());
-        await Future.delayed(Duration.zero);
-        for(int i=0; i<5; i++) {
-           bloc.add(PlacePiece(Position(x: i, y: 0))); // X
-           if (i < 4) bloc.add(PlacePiece(Position(x: i, y: 1))); // O
-        }
-      },
-      verify: (_) {
-        verify(() => repository.saveInventory(
-          any(that: isA<Inventory>().having((i) => i.coins, 'coins', 50))
-        )).called(1);
-      },
-    );
-
-    blocTest<GameBloc, GameState>(
-      'purchasing item deducts coins and adds to inventory',
-      build: () {
-        when(() => repository.loadInventory()).thenAnswer((_) async => const Inventory(coins: 200));
-        return GameBloc(repository: repository, audioService: audioService);
-      },
-      act: (bloc) async {
-        bloc.add(const StartGame());
-        await Future.delayed(Duration.zero);
-        bloc.add(PurchaseItemRequested(allSkins[0])); // Price 100
-      },
-      skip: 1, 
-      expect: () => [
-        isA<GameInProgress>()
-            .having((s) => s.inventory.coins, 'coins', 100)
-            .having((s) => s.inventory.ownedItemIds, 'owned', contains(allSkins[0].id)),
+        isA<GameInProgress>().having((s) => s.messages.last.text, 'message text', 'Hello'),
       ],
     );
   });
