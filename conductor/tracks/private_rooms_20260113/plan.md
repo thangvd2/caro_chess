@@ -13,7 +13,7 @@
 
 ## Phase 2: Frontend Integration (Flutter)
 
-- [ ] **Task 1: Update WebSocket Service & Bloc**
+- [x] **Task 1: Update WebSocket Service & Bloc** cd486cc
     - Add methods to send `CREATE_ROOM` and `JOIN_ROOM`.
     - Handle `ROOM_CREATED` event in `GameBloc`.
 - [ ] **Task 2: Build Room UI**
