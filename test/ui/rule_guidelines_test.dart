@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:caro_chess/bloc/game_bloc.dart';
 import 'package:caro_chess/models/game_models.dart';
+import 'package:caro_chess/models/cosmetics.dart';
 import 'package:caro_chess/ui/rule_guidelines_widget.dart';
 import 'package:caro_chess/ai/ai_service.dart';
 
@@ -25,6 +26,7 @@ void main() {
         rule: GameRule.standard,
         mode: GameMode.localPvP,
         difficulty: AIDifficulty.medium,
+        inventory: const Inventory(),
       ));
 
       await tester.pumpWidget(
@@ -46,6 +48,7 @@ void main() {
         rule: GameRule.caro,
         mode: GameMode.localPvP,
         difficulty: AIDifficulty.medium,
+        inventory: const Inventory(),
       ));
 
       await tester.pumpWidget(

@@ -12,7 +12,7 @@
 
 ## Phase 2: Store UI
 
-- [ ] **Task 1: Build Store Screen**
+- [~] **Task 1: Build Store Screen**
     - Create a list of available skins with buy/equip buttons.
 - [ ] **Task 2: Implement Purchase Logic**
     - Add Bloc events for purchasing and equipping items.

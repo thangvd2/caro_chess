@@ -67,6 +67,21 @@ class SocketMessageReceived extends GameEvent {
   List<Object?> get props => [message];
 }
 
+class PurchaseItemRequested extends GameEvent {
+  final SkinItem item;
+  const PurchaseItemRequested(this.item);
+  @override
+  List<Object?> get props => [item];
+}
+
+class EquipItemRequested extends GameEvent {
+  final String itemId;
+  final SkinType type;
+  const EquipItemRequested(this.itemId, this.type);
+  @override
+  List<Object?> get props => [itemId, type];
+}
+
 // States
 abstract class GameState extends Equatable {
   const GameState();
@@ -92,6 +107,7 @@ class GameInProgress extends GameState {
   final AIDifficulty difficulty;
   final Player? myPlayer;
   final UserProfile? userProfile;
+  final Inventory inventory;
   final bool canUndo;
   final bool canRedo;
 
@@ -101,6 +117,7 @@ class GameInProgress extends GameState {
     required this.rule,
     required this.mode,
     required this.difficulty,
+    required this.inventory,
     this.myPlayer,
     this.userProfile,
     this.canUndo = false,
@@ -108,19 +125,20 @@ class GameInProgress extends GameState {
   });
 
   @override
-  List<Object?> get props => [board, currentPlayer, rule, mode, difficulty, myPlayer, userProfile, canUndo, canRedo];
+  List<Object?> get props => [board, currentPlayer, rule, mode, difficulty, myPlayer, userProfile, inventory, canUndo, canRedo];
 }
 
 class GameOver extends GameState {
   final GameBoard board;
   final Player? winner;
   final GameRule rule;
+  final Inventory inventory;
   final List<Position>? winningLine;
 
-  const GameOver({required this.board, this.winner, required this.rule, this.winningLine});
+  const GameOver({required this.board, this.winner, required this.rule, required this.inventory, this.winningLine});
 
   @override
-  List<Object?> get props => [board, winner, rule, winningLine];
+  List<Object?> get props => [board, winner, rule, inventory, winningLine];
 }
 
 // Bloc
@@ -154,6 +172,8 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     on<RedoMove>(_onRedoMove);
     on<AIMoveRequested>(_onAIMoveRequested);
     on<SocketMessageReceived>(_onSocketMessageReceived);
+    on<PurchaseItemRequested>(_onPurchaseItemRequested);
+    on<EquipItemRequested>(_onEquipItemRequested);
   }
 
   @override
@@ -166,8 +186,6 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     _mode = event.mode;
     _difficulty = event.difficulty;
     _myPlayer = null;
-    
-    // Load inventory on start
     _inventory = await _repository.loadInventory();
 
     if (_mode == GameMode.online) {
@@ -225,7 +243,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         if (_engine!.isGameOver) {
           _playWinLoseSound();
           _awardCoins();
-          emit(GameOver(board: _engine!.board, winner: _engine!.winner, rule: _engine!.rule, winningLine: _engine!.winningLine));
+          emit(_buildInProgressState());
         } else {
           emit(_buildInProgressState());
         }
@@ -252,16 +270,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         _engine!.placePiece(pos);
       }
       
-      if (_engine!.isGameOver) {
-        emit(GameOver(
-          board: _engine!.board,
-          winner: _engine!.winner,
-          rule: _engine!.rule,
-          winningLine: _engine!.winningLine,
-        ));
-      } else {
-        emit(_buildInProgressState());
-      }
+      emit(_buildInProgressState());
     } else {
       add(const StartGame());
     }
@@ -275,29 +284,18 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     if (success) {
       _audioService.playMove();
       if (_mode == GameMode.online) {
-        _socketService.send({
-          'type': 'MOVE',
-          'x': event.position.x,
-          'y': event.position.y,
-        });
+        _socketService.send({'type': 'MOVE', 'x': event.position.x, 'y': event.position.y});
       }
 
       _saveState();
       if (_engine!.isGameOver) {
         _playWinLoseSound();
         _awardCoins();
-        emit(GameOver(
-          board: _engine!.board,
-          winner: _engine!.winner,
-          rule: _engine!.rule,
-          winningLine: _engine!.winningLine,
-        ));
-      } else {
-        emit(_buildInProgressState());
-        
-        if (_mode == GameMode.vsAI && _engine!.currentPlayer == Player.o) {
-          add(AIMoveRequested());
-        }
+      }
+      emit(_buildInProgressState());
+      
+      if (!_engine!.isGameOver && _mode == GameMode.vsAI && _engine!.currentPlayer == Player.o) {
+        add(AIMoveRequested());
       }
     }
   }
@@ -306,6 +304,22 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     emit(GameAIThinking());
     final move = await _aiService.getBestMove(_engine!.board, Player.o, difficulty: _difficulty);
     add(PlacePiece(move));
+  }
+
+  void _onPurchaseItemRequested(PurchaseItemRequested event, Emitter<GameState> emit) {
+    if (_inventory.coins >= event.item.price && !_inventory.ownedItemIds.contains(event.item.id)) {
+      _inventory = _inventory.removeCoins(event.item.price).addItem(event.item.id);
+      _repository.saveInventory(_inventory);
+      emit(_buildInProgressState());
+    }
+  }
+
+  void _onEquipItemRequested(EquipItemRequested event, Emitter<GameState> emit) {
+    if (_inventory.ownedItemIds.contains(event.itemId)) {
+      _inventory = _inventory.equipItem(event.itemId, event.type);
+      _repository.saveInventory(_inventory);
+      emit(_buildInProgressState());
+    }
   }
 
   void _onResetGame(ResetGame event, Emitter<GameState> emit) {
@@ -327,11 +341,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     if (_engine == null || _mode == GameMode.online) return;
     if (_engine!.redo()) {
        _saveState();
-       if (_engine!.isGameOver) {
-        emit(GameOver(board: _engine!.board, winner: _engine!.winner, rule: _engine!.rule, winningLine: _engine!.winningLine));
-      } else {
-        emit(_buildInProgressState());
-      }
+       emit(_buildInProgressState());
     }
   }
 
@@ -343,7 +353,6 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   
   void _playWinLoseSound() {
     if (_engine!.winner == null) return;
-    
     if (_mode == GameMode.localPvP) {
       _audioService.playWin();
     } else {
@@ -357,30 +366,19 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   }
   
   void _awardCoins() {
-    int reward = 0;
-    if (_engine!.winner == null) {
-      reward = 10;
-    } else {
-      bool isWin = false;
-      if (_mode == GameMode.localPvP) {
-        isWin = true; // Award both? For now just give 50
-      } else {
-        isWin = _engine!.winner == (_myPlayer ?? Player.x);
-      }
-      
-      reward = isWin ? 50 : 10;
-    }
-    
+    int reward = (_engine!.winner == null) ? 10 : ((_engine!.winner == (_myPlayer ?? Player.x)) ? 50 : 10);
     _inventory = _inventory.addCoins(reward);
     _repository.saveInventory(_inventory);
   }
 
   GameState _buildInProgressState() {
+    if (_engine == null) return GameInitial();
     if (_engine!.isGameOver) {
        return GameOver(
           board: _engine!.board,
           winner: _engine!.winner,
           rule: _engine!.rule,
+          inventory: _inventory,
           winningLine: _engine!.winningLine,
         );
     }
@@ -390,6 +388,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       rule: _engine!.rule,
       mode: _mode,
       difficulty: _difficulty,
+      inventory: _inventory,
       myPlayer: _myPlayer,
       userProfile: _userProfile,
       canUndo: _engine!.canUndo,
