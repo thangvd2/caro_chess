@@ -16,7 +16,7 @@
 - [x] **Task 1: Update WebSocket Service & Bloc** cd486cc
     - Add methods to send `CREATE_ROOM` and `JOIN_ROOM`.
     - Handle `ROOM_CREATED` event in `GameBloc`.
-- [ ] **Task 2: Build Room UI**
+- [x] **Task 2: Build Room UI** 5869e97
     - Create `RoomControlWidget` (or update existing) with Create/Join buttons.
     - Create `WaitingRoomWidget` to show the code while waiting.
 - [ ] **Task: Conductor - User Manual Verification 'Frontend Integration' (Protocol in workflow.md)**
