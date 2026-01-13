@@ -67,8 +67,9 @@ func (c *Client) readPump() {
 					// Actually, we should trigger endGame with winner = otherClient
 					// But do we have access to Matchmaker instance?
 					// c.mm is available via closure if we use it?
+					// c.mm is available via closure if we use it?
 					// Yes, c is available.
-					c.mm.endGame(otherClient)
+					c.mm.endGame(c.Session, otherClient)
 
 					// Broadcast Game Over Abandoned?
 					// endGame updates ELO but doesn't broadcast "Game Over" message usually?
@@ -181,13 +182,12 @@ func (c *Client) readPump() {
 							c.Session.ClientO.send <- resp
 						}
 
-						if winner != nil {
-							c.mm.endGame(winner)
-						}
+						// Call endGame to record match and update ELO
+						c.mm.endGame(c.Session, winner)
 					}
 				}
 			} else if msg["type"] == "WIN_CLAIM" {
-				c.mm.endGame(c)
+				c.mm.endGame(c.Session, c)
 			} else if msg["type"] == "FIND_MATCH" {
 				c.mm.addClient <- c
 			} else if msg["type"] == "CREATE_ROOM" {

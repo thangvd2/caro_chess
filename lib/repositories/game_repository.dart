@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/game_models.dart';
 import '../models/cosmetics.dart';
 import '../ai/ai_service.dart';
+import '../services/auth_service.dart';
 
 class GameRepository {
   static const String _ruleKey = 'game_rule';
@@ -76,5 +77,29 @@ class GameRepository {
       equippedPieceSkinId: json['equippedPieceSkinId'],
       equippedBoardSkinId: json['equippedBoardSkinId'],
     );
+  }
+
+  // Auth Integration
+  final AuthService _authService = AuthService();
+
+  Future<String?> ensureAuthenticated() async {
+    // Check if we have a token
+    String? token = await _authService.getToken();
+    if (token != null) return token;
+
+    // No token? Check if we have a User ID (from previous session but expired token?)
+    // Or just generate new Guest ID.
+    // For now, simple flow: try to login with stored ID. If fail (or no ID), signup new ID.
+    
+    String? userId = await _authService.getUserId();
+    if (userId != null) {
+        token = await _authService.login(userId);
+        if (token != null) return token;
+    }
+    
+    // If login failed or no ID, create new Guest
+    userId = "Guest_${DateTime.now().millisecondsSinceEpoch}";
+    token = await _authService.signup(userId);
+    return token;
   }
 }

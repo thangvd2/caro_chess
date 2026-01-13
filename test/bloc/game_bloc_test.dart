@@ -11,7 +11,7 @@ import 'package:caro_chess/repositories/game_repository.dart';
 import 'package:caro_chess/ai/ai_service.dart';
 import 'package:caro_chess/services/web_socket_service.dart';
 import 'package:caro_chess/services/audio_service.dart';
-import 'package:caro_chess/ui/store_screen.dart';
+import 'package:caro_chess/ui/game_board_widget.dart';
 
 class MockGameRepository extends Mock implements GameRepository {}
 class MockAIService extends Mock implements AIService {}

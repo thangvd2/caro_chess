@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"math/rand"
 	"sync"
@@ -34,10 +35,11 @@ func (rm *RoomManager) createRoom(host *Client) (string, error) {
 	}
 
 	session := &GameSession{
-		ClientX:   host,
-		PlayerXID: host.ID,
-		Turn:      "X",
-		Engine:    engine.NewGameEngine(15, 15, engine.RuleStandard),
+		ClientX:    host,
+		PlayerXID:  host.ID,
+		Turn:       "X",
+		Engine:     engine.NewGameEngine(15, 15, engine.RuleStandard),
+		Spectators: make(map[*Client]bool),
 	}
 
 	rm.rooms[code] = session
@@ -71,7 +73,27 @@ func (rm *RoomManager) joinRoom(code string, guest *Client) error {
 	}
 
 	if session.ClientO != nil {
-		return errors.New("room full")
+		// Room full, add as spectator
+		if session.Spectators == nil {
+			session.Spectators = make(map[*Client]bool)
+		}
+		session.Spectators[guest] = true
+		guest.Session = session
+
+		// Send initial state to spectator
+		initialState := map[string]interface{}{
+			"type":     "SPECTATOR_JOINED",
+			"history":  session.Engine.History,
+			"player_x": session.PlayerXID,
+			"player_o": session.PlayerOID,
+		}
+
+		msg, err := json.Marshal(initialState)
+		if err == nil {
+			guest.send <- msg
+		}
+
+		return nil
 	}
 
 	session.ClientO = guest
@@ -106,6 +128,13 @@ func (rm *RoomManager) broadcast(code string, msg []byte) {
 		}
 		if session.ClientO != nil {
 			session.ClientO.send <- msg
+		}
+		for client := range session.Spectators {
+			select {
+			case client.send <- msg:
+			default:
+				// Drop message if buffer full
+			}
 		}
 	}
 }

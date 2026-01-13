@@ -3,6 +3,9 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"time"
+
+	"github.com/google/uuid"
 
 	"caro_chess_server/db"
 	"caro_chess_server/elo"
@@ -73,36 +76,98 @@ func (m *Matchmaker) RegisterSession(session *GameSession) {
 	}
 }
 
-func (m *Matchmaker) endGame(winner *Client) {
-	session := m.sessions[winner]
+func (m *Matchmaker) endGame(session *GameSession, winner *Client) {
 	if session == nil {
 		return
 	}
-
-	loser := session.ClientX
-	if winner == session.ClientX {
-		loser = session.ClientO
+	// Determine Loser (if any)
+	if winner != nil {
+		// Logic to identify loser if needed
+	} else {
+		// Draw
 	}
 
-	u1, _ := m.repo.GetUser(winner.ID)
-	u2, _ := m.repo.GetUser(loser.ID)
+	u1, _ := m.repo.GetUser(session.PlayerXID)
+	u2, _ := m.repo.GetUser(session.PlayerOID) // Assumes O exists
 
-	r1, r2 := elo.CalculateRatings(u1.ELO, u2.ELO, 1.0)
+	// Calculate ELO
+	var scoreX float64 = 0.5
+	if winner == session.ClientX {
+		scoreX = 1.0
+	} else if winner == session.ClientO {
+		scoreX = 0.0
+	}
+
+	r1, r2 := elo.CalculateRatings(u1.ELO, u2.ELO, scoreX)
 
 	u1.ELO = r1
-	u1.Wins++
 	u2.ELO = r2
-	u2.Losses++
+
+	// Update Stats
+	u1.GamesPlayed++
+	u2.GamesPlayed++
+	if scoreX == 1.0 {
+		u1.Wins++
+		u2.Losses++
+	} else if scoreX == 0.0 {
+		u1.Losses++
+		u2.Wins++
+	} else {
+		u1.Draws++
+		u2.Draws++
+	}
 
 	m.repo.SaveUser(u1)
 	m.repo.SaveUser(u2)
 
-	msg1, _ := json.Marshal(map[string]interface{}{"type": "UPDATE_RANK", "elo": u1.ELO})
-	winner.send <- msg1
+	// Save Match to DB
+	moves := make([]db.Move, len(session.Engine.History))
+	for i, mv := range session.Engine.History {
+		p := "X"
+		if i%2 != 0 {
+			p = "O"
+		}
+		moves[i] = db.Move{
+			X:      mv.X,
+			Y:      mv.Y,
+			Player: p,
+			Order:  i,
+		}
+	}
 
-	msg2, _ := json.Marshal(map[string]interface{}{"type": "UPDATE_RANK", "elo": u2.ELO})
-	loser.send <- msg2
+	var winnerID *string
+	if winner != nil {
+		wid := winner.ID
+		winnerID = &wid
+	}
 
-	delete(m.sessions, winner)
-	delete(m.sessions, loser)
+	match := &db.Match{
+		ID:        uuid.New().String(),
+		PlayerXID: session.PlayerXID,
+		PlayerOID: session.PlayerOID,
+		WinnerID:  winnerID,
+		Moves:     moves,
+		Timestamp: time.Now(),
+	}
+	m.repo.SaveMatch(match)
+
+	// Notify clients of new Rank
+	if session.ClientX != nil {
+		msg, _ := json.Marshal(map[string]interface{}{"type": "UPDATE_RANK", "elo": u1.ELO})
+		session.ClientX.send <- msg
+	}
+	if session.ClientO != nil {
+		msg, _ := json.Marshal(map[string]interface{}{"type": "UPDATE_RANK", "elo": u2.ELO})
+		session.ClientO.send <- msg
+	}
+
+	// Cleanup session
+	if session.ClientX != nil {
+		delete(m.sessions, session.ClientX)
+		session.ClientX.Session = nil
+	}
+	if session.ClientO != nil {
+		delete(m.sessions, session.ClientO)
+		session.ClientO.Session = nil
+	}
 }

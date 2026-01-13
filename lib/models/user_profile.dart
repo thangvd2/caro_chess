@@ -9,13 +9,30 @@ class UserProfile extends Equatable {
   final int losses;
   final int draws;
 
+  final int gamesPlayed;
+  final int coins;
+
   const UserProfile({
     required this.id,
     this.elo = 1200,
+    this.gamesPlayed = 0,
+    this.coins = 0,
     this.wins = 0,
     this.losses = 0,
     this.draws = 0,
   });
+
+  factory UserProfile.fromJson(Map<String, dynamic> json) {
+    return UserProfile(
+      id: json['id'],
+      elo: json['elo'] ?? 1200,
+      gamesPlayed: json['games_played'] ?? 0,
+      coins: json['coins'] ?? 0,
+      wins: json['wins'] ?? 0,
+      losses: json['losses'] ?? 0,
+      draws: json['draws'] ?? 0,
+    );
+  }
 
   PlayerTier get tier {
     if (elo < 1200) return PlayerTier.bronze;

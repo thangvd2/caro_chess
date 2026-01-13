@@ -14,78 +14,82 @@ class GameBoardWidget extends StatelessWidget {
     return BlocBuilder<GameBloc, GameState>(
       builder: (context, state) {
         if (state is GameInProgress || state is GameOver) {
-          final board = (state is GameInProgress) 
-              ? state.board 
-              : (state as GameOver).board;
-          
-          final inventory = (state is GameInProgress) 
-              ? state.inventory 
-              : (state as GameOver).inventory;
-          
+          final board = (state is GameInProgress) ? state.board : (state as GameOver).board;
+          final inventory = (state is GameInProgress) ? state.inventory : (state as GameOver).inventory;
           final winningLine = (state is GameOver) ? state.winningLine : null;
 
-          Color boardColor = Colors.white;
-          if (inventory.equippedBoardSkinId == 'dark_board') {
-            boardColor = Colors.black87;
-          } else if (inventory.equippedBoardSkinId == 'wooden_board') {
-            boardColor = Colors.orange.shade100;
-          }
-              
-          return Container(
-            color: boardColor,
-            child: AspectRatio(
-              aspectRatio: 1.0,
-              child: GridView.builder(
-                itemCount: board.rows * board.columns,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: board.columns,
-                ),
-                itemBuilder: (context, index) {
-                  final x = index % board.columns;
-                  final y = index ~/ board.columns;
-                  final cell = board.cells[y][x];
-                  
-                  final isHighlighted = winningLine?.contains(Position(x: x, y: y)) ?? false;
-                  
-                  return BoardCell(
-                    cell: cell,
-                    isHighlighted: isHighlighted,
-                    inventory: inventory,
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      context.read<GameBloc>().add(PlacePiece(Position(x: x, y: y)));
-                    },
-                  );
-                },
-              ),
-            ),
+          return BoardDisplay(
+            board: board,
+            inventory: inventory,
+            winningLine: winningLine,
+            onTap: (pos) {
+              if (state is GameInProgress && state.isSpectating) return;
+              HapticFeedback.lightImpact();
+              context.read<GameBloc>().add(PlacePiece(pos));
+            },
           );
         }
         
         // Default / Initial State (Empty Board)
-        return Container(
-          color: Colors.white,
-          child: AspectRatio(
-            aspectRatio: 1.0,
-            child: GridView.builder(
-              itemCount: AppConfig.boardRows * AppConfig.boardColumns,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: AppConfig.boardColumns,
-              ),
-              itemBuilder: (context, index) {
-                return Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
-                    color: Colors.white,
-                  ),
-                );
-              },
-            ),
-          ),
+        return BoardDisplay(
+          board: GameBoard(rows: AppConfig.boardRows, columns: AppConfig.boardColumns),
+          inventory: const Inventory(),
+          onTap: (_) {},
         );
       },
+    );
+  }
+}
+
+class BoardDisplay extends StatelessWidget {
+  final GameBoard board;
+  final Inventory inventory;
+  final List<Position>? winningLine;
+  final Function(Position) onTap;
+
+  const BoardDisplay({
+    super.key,
+    required this.board,
+    required this.inventory,
+    required this.onTap,
+    this.winningLine,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Color boardColor = Colors.white;
+    if (inventory.equippedBoardSkinId == 'dark_board') {
+      boardColor = Colors.black87;
+    } else if (inventory.equippedBoardSkinId == 'wooden_board') {
+      boardColor = Colors.orange.shade100;
+    }
+
+    return Container(
+      color: boardColor,
+      child: AspectRatio(
+        aspectRatio: 1.0,
+        child: GridView.builder(
+          itemCount: board.rows * board.columns,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: board.columns,
+          ),
+          itemBuilder: (context, index) {
+            final x = index % board.columns;
+            final y = index ~/ board.columns;
+            final cell = board.cells[y][x];
+
+            final isHighlighted = winningLine?.contains(Position(x: x, y: y)) ?? false;
+
+            return BoardCell(
+              cell: cell,
+              isHighlighted: isHighlighted,
+              inventory: inventory,
+              onTap: () => onTap(Position(x: x, y: y)),
+            );
+          },
+        ),
+      ),
     );
   }
 }

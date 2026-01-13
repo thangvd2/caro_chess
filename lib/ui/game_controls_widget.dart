@@ -129,15 +129,21 @@ class _GameControlsWidgetState extends State<GameControlsWidget> {
         VoidCallback? onRedo;
 
         if (state is GameInProgress) {
-          statusText = "Turn: ${state.currentPlayer == Player.x ? 'X' : 'O'}";
-          if (state.mode == GameMode.vsAI) statusText += " (vs AI)";
-          if (state.mode == GameMode.online) {
-            statusText += state.myPlayer == state.currentPlayer ? " (Your turn)" : " (Opponent turn)";
+          if (state.isSpectating) {
+            statusText = "Spectating (X vs O)";
+            onReset = () => context.read<GameBloc>().add(ResetGame()); // Leave Room
+            // Undo/Redo unavailable for spectator
+          } else {
+              statusText = "Turn: ${state.currentPlayer == Player.x ? 'X' : 'O'}";
+              if (state.mode == GameMode.vsAI) statusText += " (vs AI)";
+              if (state.mode == GameMode.online) {
+                statusText += state.myPlayer == state.currentPlayer ? " (Your turn)" : " (Opponent turn)";
+              }
+              
+              onReset = () => context.read<GameBloc>().add(ResetGame());
+              if (state.canUndo) onUndo = () => context.read<GameBloc>().add(UndoMove());
+              if (state.canRedo) onRedo = () => context.read<GameBloc>().add(RedoMove());
           }
-          
-          onReset = () => context.read<GameBloc>().add(ResetGame());
-          if (state.canUndo) onUndo = () => context.read<GameBloc>().add(UndoMove());
-          if (state.canRedo) onRedo = () => context.read<GameBloc>().add(RedoMove());
         } else if (state is GameOver) {
           statusText = state.winner != null ? "Winner: ${state.winner == Player.x ? 'X' : 'O'}" : "Draw!";
           onReset = () => context.read<GameBloc>().add(ResetGame());

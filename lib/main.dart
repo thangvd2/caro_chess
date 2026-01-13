@@ -6,10 +6,12 @@ import 'ui/game_controls_widget.dart';
 import 'ui/rule_selector_widget.dart';
 import 'ui/rule_guidelines_widget.dart';
 import 'ui/profile_screen.dart';
-import 'ui/store_screen.dart';
 import 'ui/victory_overlay.dart';
 import 'ui/shake_widget.dart';
 import 'ui/chat_panel.dart';
+import 'ui/history_screen.dart';
+import 'ui/leaderboard_screen.dart';
+import 'ui/shop_screen.dart';
 import 'models/user_profile.dart';
 import 'models/cosmetics.dart';
 
@@ -49,19 +51,34 @@ class GamePage extends StatelessWidget {
             return Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.store),
+                  icon: const Icon(Icons.history),
                   onPressed: () {
-                    final state = context.read<GameBloc>().state;
-                    Inventory inventory = const Inventory();
-                    if (state is GameInProgress) {
-                      inventory = state.inventory;
-                    } else if (state is GameOver) {
-                      inventory = state.inventory;
-                    }
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => StoreScreen(inventory: inventory),
+                        builder: (_) => const HistoryScreen(),
+                      ),
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.leaderboard),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const LeaderboardScreen(),
+                      ),
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.store),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ShopScreen(),
                       ),
                     );
                   },
