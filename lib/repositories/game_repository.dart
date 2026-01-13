@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/game_models.dart';
+import '../models/cosmetics.dart';
 import '../ai/ai_service.dart';
 
 class GameRepository {
@@ -8,6 +9,7 @@ class GameRepository {
   static const String _modeKey = 'game_mode';
   static const String _difficultyKey = 'game_difficulty';
   static const String _historyKey = 'game_history';
+  static const String _inventoryKey = 'game_inventory';
 
   Future<void> saveGame(GameRule rule, List<Position> history, {GameMode mode = GameMode.localPvP, AIDifficulty difficulty = AIDifficulty.medium}) async {
     final prefs = await SharedPreferences.getInstance();
@@ -49,5 +51,30 @@ class GameRepository {
     await prefs.remove(_modeKey);
     await prefs.remove(_difficultyKey);
     await prefs.remove(_historyKey);
+  }
+
+  Future<void> saveInventory(Inventory inventory) async {
+    final prefs = await SharedPreferences.getInstance();
+    final json = {
+      'coins': inventory.coins,
+      'ownedItemIds': inventory.ownedItemIds,
+      'equippedPieceSkinId': inventory.equippedPieceSkinId,
+      'equippedBoardSkinId': inventory.equippedBoardSkinId,
+    };
+    await prefs.setString(_inventoryKey, jsonEncode(json));
+  }
+
+  Future<Inventory> loadInventory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonString = prefs.getString(_inventoryKey);
+    if (jsonString == null) return const Inventory();
+    
+    final json = jsonDecode(jsonString);
+    return Inventory(
+      coins: json['coins'],
+      ownedItemIds: List<String>.from(json['ownedItemIds']),
+      equippedPieceSkinId: json['equippedPieceSkinId'],
+      equippedBoardSkinId: json['equippedBoardSkinId'],
+    );
   }
 }
