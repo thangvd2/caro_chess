@@ -18,8 +18,8 @@
     - Add Bloc events for purchasing and equipping items.
 - [x] **Task: Conductor - User Manual Verification 'Store UI' (Protocol in workflow.md)**
 
-## Phase 3: Visual Integration
+## Phase 3: Visual Integration [checkpoint: 13cbbe9]
 
 - [x] **Task 1: Update Board Theming** f786ec5
 - [x] **Task 2: Update Piece Rendering** f786ec5
-- [ ] **Task: Conductor - User Manual Verification 'Visual Integration' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Visual Integration' (Protocol in workflow.md)**
