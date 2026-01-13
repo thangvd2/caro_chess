@@ -21,7 +21,7 @@
 
 ## Phase 3: Final Verification
 
-- [ ] **Task 1: End-to-End Testing**
+- [~] **Task 1: End-to-End Testing**
     - Verify global chat between unrelated clients.
     - Verify private chat within a match.
 - [ ] **Task: Conductor - User Manual Verification 'Final Verification' (Protocol in workflow.md)**
