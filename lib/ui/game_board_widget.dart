@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/game_bloc.dart';
 import '../models/game_models.dart';
+import '../models/cosmetics.dart';
 
 class GameBoardWidget extends StatelessWidget {
   const GameBoardWidget({super.key});
@@ -16,32 +17,47 @@ class GameBoardWidget extends StatelessWidget {
               ? state.board 
               : (state as GameOver).board;
           
+          final inventory = (state is GameInProgress) 
+              ? state.inventory 
+              : (state as GameOver).inventory;
+          
           final winningLine = (state is GameOver) ? state.winningLine : null;
+
+          Color boardColor = Colors.white;
+          if (inventory.equippedBoardSkinId == 'dark_board') {
+            boardColor = Colors.black87;
+          } else if (inventory.equippedBoardSkinId == 'wooden_board') {
+            boardColor = Colors.orange.shade100;
+          }
               
-          return AspectRatio(
-            aspectRatio: 1.0,
-            child: GridView.builder(
-              itemCount: board.rows * board.columns,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: board.columns,
+          return Container(
+            color: boardColor,
+            child: AspectRatio(
+              aspectRatio: 1.0,
+              child: GridView.builder(
+                itemCount: board.rows * board.columns,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: board.columns,
+                ),
+                itemBuilder: (context, index) {
+                  final x = index % board.columns;
+                  final y = index ~/ board.columns;
+                  final cell = board.cells[y][x];
+                  
+                  final isHighlighted = winningLine?.contains(Position(x: x, y: y)) ?? false;
+                  
+                  return BoardCell(
+                    cell: cell,
+                    isHighlighted: isHighlighted,
+                    inventory: inventory,
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      context.read<GameBloc>().add(PlacePiece(Position(x: x, y: y)));
+                    },
+                  );
+                },
               ),
-              itemBuilder: (context, index) {
-                final x = index % board.columns;
-                final y = index ~/ board.columns;
-                final cell = board.cells[y][x];
-                
-                final isHighlighted = winningLine?.contains(Position(x: x, y: y)) ?? false;
-                
-                return BoardCell(
-                  cell: cell,
-                  isHighlighted: isHighlighted,
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    context.read<GameBloc>().add(PlacePiece(Position(x: x, y: y)));
-                  },
-                );
-              },
             ),
           );
         }
@@ -55,8 +71,15 @@ class BoardCell extends StatelessWidget {
   final Cell cell;
   final VoidCallback onTap;
   final bool isHighlighted;
+  final Inventory? inventory;
 
-  const BoardCell({super.key, required this.cell, required this.onTap, this.isHighlighted = false});
+  const BoardCell({
+    super.key, 
+    required this.cell, 
+    required this.onTap, 
+    this.isHighlighted = false,
+    this.inventory,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +91,7 @@ class BoardCell extends StatelessWidget {
             color: isHighlighted ? Colors.orange : Colors.grey.shade300,
             width: isHighlighted ? 2 : 1,
           ),
-          color: isHighlighted ? Colors.orange.withOpacity(0.2) : Colors.white,
+          color: isHighlighted ? Colors.orange.withOpacity(0.2) : Colors.transparent,
         ),
         child: Center(
           child: cell.isEmpty
@@ -86,17 +109,36 @@ class BoardCell extends StatelessWidget {
                       ),
                     );
                   },
-                  child: Text(
-                    cell.owner == Player.x ? 'X' : 'O',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: cell.owner == Player.x ? Colors.blue : Colors.red,
-                    ),
-                  ),
+                  child: _buildPiece(),
                 ),
         ),
       ),
+    );
+  }
+
+  Widget _buildPiece() {
+    final skinId = inventory?.equippedPieceSkinId;
+    
+    TextStyle style = TextStyle(
+      fontSize: 22,
+      fontWeight: FontWeight.bold,
+      color: cell.owner == Player.x ? Colors.blue : Colors.red,
+    );
+
+    if (skinId == 'neon_piece') {
+      style = style.copyWith(
+        shadows: [
+          Shadow(color: style.color!, blurRadius: 10),
+          Shadow(color: style.color!, blurRadius: 20),
+        ],
+      );
+    } else if (skinId == 'classic_piece') {
+      style = style.copyWith(fontFamily: 'Serif');
+    }
+
+    return Text(
+      cell.owner == Player.x ? 'X' : 'O',
+      style: style,
     );
   }
 }

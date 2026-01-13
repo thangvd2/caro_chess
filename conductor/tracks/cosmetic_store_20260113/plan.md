@@ -20,7 +20,7 @@
 
 ## Phase 3: Visual Integration
 
-- [ ] **Task 1: Update Board Theming**
+- [~] **Task 1: Update Board Theming**
     - Refactor `GameBoardWidget` to support different background colors and grid styles.
 - [ ] **Task 2: Update Piece Rendering**
     - Update `BoardCell` to render pieces based on the equipped skin.
