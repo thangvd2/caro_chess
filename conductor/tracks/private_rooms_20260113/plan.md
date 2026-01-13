@@ -11,7 +11,7 @@
     - Integrate `RoomManager` into `main.go`.
 - [x] **Task: Conductor - User Manual Verification 'Backend Room Logic' (Protocol in workflow.md)**
 
-## Phase 2: Frontend Integration (Flutter)
+## Phase 2: Frontend Integration (Flutter) [checkpoint: e64acbf]
 
 - [x] **Task 1: Update WebSocket Service & Bloc** cd486cc
     - Add methods to send `CREATE_ROOM` and `JOIN_ROOM`.
@@ -19,7 +19,7 @@
 - [x] **Task 2: Build Room UI** 5869e97
     - Create `RoomControlWidget` (or update existing) with Create/Join buttons.
     - Create `WaitingRoomWidget` to show the code while waiting.
-- [ ] **Task: Conductor - User Manual Verification 'Frontend Integration' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Frontend Integration' (Protocol in workflow.md)**
 
 ## Phase 3: Final Verification
 
