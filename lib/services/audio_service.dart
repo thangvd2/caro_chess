@@ -20,7 +20,7 @@ class AudioService {
     } catch (e) {
       // Ignore generic audio errors (common on Web if auto-play policy blocks it
       // or if interactions happen too quickly)
-      // print("Audio Error: $e");
+      print("Audio Service Error: $e");
     }
   }
 

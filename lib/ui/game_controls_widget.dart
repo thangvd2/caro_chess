@@ -60,19 +60,19 @@ class _GameControlsWidgetState extends State<GameControlsWidget> {
                 ],
               ),
               const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 8.0,
+                runSpacing: 8.0,
                 children: [
                   ElevatedButton(
                     onPressed: () => context.read<GameBloc>().add(const StartGame(mode: GameMode.online)),
                     child: const Text('Quick Match'),
                   ),
-                  const SizedBox(width: 8),
                   ElevatedButton(
                     onPressed: () => context.read<GameBloc>().add(StartRoomCreation()),
                     child: const Text('Create Room'),
                   ),
-                  const SizedBox(width: 8),
                   ElevatedButton(
                     onPressed: () => _showJoinRoomDialog(context),
                     child: const Text('Join Room'),
@@ -113,15 +113,7 @@ class _GameControlsWidgetState extends State<GameControlsWidget> {
           );
         }
 
-        if (state is GameAIThinking) {
-          return const Column(
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 8),
-              Text("AI is thinking..."),
-            ],
-          );
-        }
+
 
         String statusText = "";
         VoidCallback? onReset;
@@ -146,6 +138,18 @@ class _GameControlsWidgetState extends State<GameControlsWidget> {
           }
         } else if (state is GameOver) {
           statusText = state.winner != null ? "Winner: ${state.winner == Player.x ? 'X' : 'O'}" : "Draw!";
+          
+          if (state.mode == GameMode.online && state.myPlayer != null && state.winner != null) {
+            if (state.winner == state.myPlayer) {
+              statusText = "You Win!";
+              if (state.winReason == "opponent_left") {
+                statusText += " (Opponent Left)";
+              }
+            } else {
+              statusText = "You Lose!";
+            }
+          }
+          
           onReset = () => context.read<GameBloc>().add(ResetGame());
         }
 
@@ -162,7 +166,42 @@ class _GameControlsWidgetState extends State<GameControlsWidget> {
               ],
             ),
             const SizedBox(height: 8),
-            ElevatedButton(onPressed: onReset, child: const Text('Reset Game')),
+            if ((state is GameInProgress && state.mode != GameMode.online) || 
+                (state is GameOver && state.mode != GameMode.online)) ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                    onPressed: onReset, 
+                    child: const Text('Exit', style: TextStyle(color: Colors.white)),
+                  ),
+                  const SizedBox(width: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (state is GameInProgress) {
+                        context.read<GameBloc>().add(StartGame(
+                          mode: state.mode,
+                          rule: state.rule,
+                          difficulty: state.difficulty,
+                        ));
+                      } else if (state is GameOver) {
+                        context.read<GameBloc>().add(StartGame(
+                          mode: state.mode,
+                          rule: state.rule,
+                          difficulty: state.difficulty,
+                        ));
+                      }
+                    },
+                    child: const Text('New Game'),
+                  ),
+                ],
+              ),
+            ] else ...[
+              ElevatedButton(onPressed: onReset, child: const Text(
+                'Leave Room' // Online
+              )),
+            ],
           ],
         );
       },

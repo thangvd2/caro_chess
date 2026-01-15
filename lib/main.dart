@@ -14,6 +14,7 @@ import 'ui/leaderboard_screen.dart';
 import 'ui/shop_screen.dart';
 import 'models/user_profile.dart';
 import 'models/user_profile.dart';
+import 'models/game_models.dart';
 import 'ui/login_screen.dart';
 import 'ui/home_screen.dart';
 
@@ -47,12 +48,22 @@ class AppContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<GameBloc, GameState>(
       builder: (context, state) {
+        Widget child;
         if (state is GameAuthRequired) {
-          return const LoginScreen();
+          child = const LoginScreen();
         } else if (state is GameInitial) {
-           return const HomeScreen();
+           child = const HomeScreen();
+        } else {
+           child = const GamePage();
         }
-        return const GamePage();
+        
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 500),
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+          child: child,
+        );
       },
     );
   }
@@ -163,7 +174,7 @@ class GamePage extends StatelessWidget {
                   const SizedBox(height: 20),
                   BlocBuilder<GameBloc, GameState>(
                     builder: (context, state) {
-                      if (state is GameInProgress) {
+                      if (state is GameInProgress && state.mode == GameMode.online) {
                         return ChatPanel(
                           messages: state.messages,
                           onSend: (text) => context.read<GameBloc>().add(SendChatMessage(text)),
@@ -178,7 +189,43 @@ class GamePage extends StatelessWidget {
           ),
           BlocBuilder<GameBloc, GameState>(
             builder: (context, state) {
-              return VictoryOverlay(isVisible: state is GameOver && state.winner != null);
+              bool showConfetti = false;
+              if (state is GameOver && state.winner != null) {
+                 if (state.mode == GameMode.localPvP) {
+                    showConfetti = true; 
+                 } else {
+                    // Online or vsAI
+                    showConfetti = state.winner == state.myPlayer; 
+                 }
+              }
+              return VictoryOverlay(isVisible: showConfetti);
+            },
+          ),
+          BlocBuilder<GameBloc, GameState>(
+            builder: (context, state) {
+               if (state is GameInProgress && state.isAIThinking) {
+                 return Container(
+                   color: Colors.black54,
+                   child: const Center(
+                     child: Column(
+                       mainAxisSize: MainAxisSize.min,
+                       children: [
+                         CircularProgressIndicator(color: Colors.white),
+                         SizedBox(height: 16),
+                         Text(
+                           "Thinking...",
+                           style: TextStyle(
+                             color: Colors.white, 
+                             fontSize: 18, 
+                             fontWeight: FontWeight.bold
+                           ),
+                         ),
+                       ],
+                     ),
+                   ),
+                 );
+               }
+               return const SizedBox.shrink();
             },
           ),
         ],

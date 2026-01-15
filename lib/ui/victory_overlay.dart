@@ -24,6 +24,7 @@ class _VictoryOverlayState extends State<VictoryOverlay> {
   void didUpdateWidget(VictoryOverlay oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.isVisible && !oldWidget.isVisible) {
+      print("VictoryOverlay: Playing confetti");
       _controller.play();
     } else if (!widget.isVisible && oldWidget.isVisible) {
       _controller.stop();
@@ -40,11 +41,15 @@ class _VictoryOverlayState extends State<VictoryOverlay> {
   Widget build(BuildContext context) {
     return IgnorePointer(
       child: Align(
-        alignment: Alignment.topCenter,
+        alignment: Alignment.center,
         child: ConfettiWidget(
           confettiController: _controller,
           blastDirectionality: BlastDirectionality.explosive,
           shouldLoop: false,
+          numberOfParticles: 20,
+          gravity: 0.1,
+          minBlastForce: 10,
+          maxBlastForce: 30,
           colors: const [Colors.green, Colors.blue, Colors.pink, Colors.orange, Colors.purple],
         ),
       ),
