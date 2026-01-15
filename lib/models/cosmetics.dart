@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-enum SkinType { piece, board }
+enum SkinType { piece, board, avatarFrame }
 
 class SkinItem extends Equatable {
   final String id;

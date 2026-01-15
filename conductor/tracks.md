@@ -29,3 +29,6 @@
 
 ## [x] Track: Social & Chat System
 *Link: [./conductor/archive/social_chat_20260113/plan.md](./conductor/archive/social_chat_20260113/plan.md)*
+
+## [x] Track: Auth & Multiplayer UX Improvements
+*Link: [conductor/tracks/auth_multiplayer_20260115/plan.md](conductor/tracks/auth_multiplayer_20260115/plan.md)*

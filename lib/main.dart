@@ -13,7 +13,9 @@ import 'ui/history_screen.dart';
 import 'ui/leaderboard_screen.dart';
 import 'ui/shop_screen.dart';
 import 'models/user_profile.dart';
-import 'models/cosmetics.dart';
+import 'models/user_profile.dart';
+import 'ui/login_screen.dart';
+import 'ui/home_screen.dart';
 
 void main() {
   runApp(const CaroChessApp());
@@ -24,16 +26,34 @@ class CaroChessApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Caro Chess',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
+    return BlocProvider(
+      create: (context) => GameBloc()..add(LoadSavedGame()),
+      child: MaterialApp(
+        title: 'Caro Chess',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+          useMaterial3: true,
+        ),
+        home: const AppContent(),
       ),
-      home: BlocProvider(
-        create: (context) => GameBloc()..add(LoadSavedGame()),
-        child: const GamePage(),
-      ),
+    );
+  }
+}
+
+class AppContent extends StatelessWidget {
+  const AppContent({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<GameBloc, GameState>(
+      builder: (context, state) {
+        if (state is GameAuthRequired) {
+          return const LoginScreen();
+        } else if (state is GameInitial) {
+           return const HomeScreen();
+        }
+        return const GamePage();
+      },
     );
   }
 }
@@ -90,6 +110,8 @@ class GamePage extends StatelessWidget {
                     UserProfile? profile;
                     if (state is GameInProgress) {
                       profile = state.userProfile;
+                    } else if (state is GameOver) {
+                      profile = state.userProfile;
                     }
                     
                     Navigator.push(
@@ -114,8 +136,19 @@ class GamePage extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const RuleSelectorWidget(),
-                  const RuleGuidelinesWidget(),
+                  BlocBuilder<GameBloc, GameState>(
+                    builder: (context, state) {
+                       return Visibility(
+                         visible: state is GameInitial,
+                         child: Column(
+                           children: [
+                             const RuleSelectorWidget(),
+                             const RuleGuidelinesWidget(),
+                           ],
+                         ),
+                       );
+                    },
+                  ),
                   const SizedBox(height: 10),
                   const GameControlsWidget(),
                   const SizedBox(height: 20),

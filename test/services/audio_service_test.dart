@@ -13,12 +13,15 @@ void main() {
 
     setUp(() {
       mockPlayer = MockAudioPlayer();
-      service = AudioService(player: mockPlayer);
+      // Pass a factory that returns the mock player
+      service = AudioService(playerFactory: () => mockPlayer);
       registerFallbackValue(FakeSource());
+      registerFallbackValue(ReleaseMode.release);
       
       when(() => mockPlayer.play(any())).thenAnswer((_) async {});
       when(() => mockPlayer.stop()).thenAnswer((_) async {});
       when(() => mockPlayer.setSource(any())).thenAnswer((_) async {});
+      when(() => mockPlayer.setReleaseMode(any())).thenAnswer((_) async {});
     });
 
     test('plays move sound', () async {
