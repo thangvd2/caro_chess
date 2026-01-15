@@ -102,4 +102,16 @@ class GameRepository {
     token = await _authService.signup(userId);
     return token;
   }
+  
+  Future<String?> getUserId() async {
+    return _authService.getUserId();
+  }
+
+  Future<void> logout() async {
+    await _authService.logout();
+    await clearGame(); // Optional: clear local game state too? Maybe not inventory but current game?
+    // Let's keep inventory for now in case they re-login (though guest ID is lost).
+    // Actually, if it's a guest ID and we lose it, inventory is effectively gone/inaccessible unless on server.
+    // So clearing game state is fine.
+  }
 }

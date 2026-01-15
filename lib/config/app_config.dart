@@ -8,24 +8,25 @@ class AppConfig {
 
   // ==================== SERVER CONFIGURATION ====================
 
+
+
   /// WebSocket server URL
   ///
   /// Supports environment variable override via CARO_CHESS_SERVER_URL
   /// Format: ws://host:port/ws
-  static String get serverUrl =>
-      _fromEnv('CARO_CHESS_SERVER_URL', _defaultServerUrl);
+  static const String serverUrl = String.fromEnvironment(
+      'CARO_CHESS_SERVER_URL', defaultValue: _defaultServerUrl);
 
   static const String _defaultServerUrl = 'ws://localhost:8080/ws';
 
   /// Auth server URL (HTTP)
   ///
-  /// Supports environment variable override via CARO_CHESS_auth_URL
+  /// Supports environment variable override via CARO_CHESS_AUTH_URL
   /// Format: http://host:port
-  static String get authUrl =>
-      _fromEnv('CARO_CHESS_AUTH_URL', _defaultAuthUrl);
+  static const String authUrl = String.fromEnvironment(
+      'CARO_CHESS_AUTH_URL', defaultValue: _defaultAuthUrl);
 
   static const String _defaultAuthUrl = 'http://localhost:8080';
-
   // ==================== GAME CONFIGURATION ====================
 
   /// Default game board dimensions
@@ -73,22 +74,6 @@ class AppConfig {
 
   /// Matchmaking timeout
   static const Duration matchmakingTimeout = Duration(seconds: 30);
-
-  // ==================== HELPERS ====================
-
-  /// Get value from environment or return default
-  static String _fromEnv(String key, String defaultValue) {
-    const env = String.fromEnvironment;
-    final value = env(key);
-    return value.isNotEmpty ? value : defaultValue;
-  }
-
-  /// Get integer value from environment or return default
-  static int _intFromEnv(String key, int defaultValue) {
-    const env = String.fromEnvironment;
-    final value = env(key);
-    return value.isNotEmpty ? int.tryParse(value) ?? defaultValue : defaultValue;
-  }
 }
 
 /// AI Difficulty levels

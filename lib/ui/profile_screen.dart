@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/user_profile.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/game_bloc.dart';
 
 import '../services/leaderboard_service.dart';
 
@@ -47,6 +49,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           title: const Text("Player Profile"),
           actions: [
               IconButton(icon: const Icon(Icons.refresh), onPressed: _refreshProfile),
+              IconButton(
+                  icon: const Icon(Icons.logout),
+                  onPressed: () {
+                    context.read<GameBloc>().add(LogoutRequested());
+                    // Pop to root (AppContent) which will show LoginScreen
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  },
+              ),
           ],
       ),
       body: _isLoading 
