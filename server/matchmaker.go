@@ -12,16 +12,18 @@ import (
 )
 
 type Matchmaker struct {
-	repo      db.UserRepository
-	addClient chan *Client
-	sessions  map[*Client]*GameSession
+	repo         db.UserRepository
+	addClient    chan *Client
+	removeClient chan *Client // New channel
+	sessions     map[*Client]*GameSession
 }
 
 func newMatchmaker(repo db.UserRepository) *Matchmaker {
 	return &Matchmaker{
-		repo:      repo,
-		addClient: make(chan *Client),
-		sessions:  make(map[*Client]*GameSession),
+		repo:         repo,
+		addClient:    make(chan *Client),
+		removeClient: make(chan *Client), // Initialize
+		sessions:     make(map[*Client]*GameSession),
 	}
 }
 
@@ -35,6 +37,10 @@ func (m *Matchmaker) run() {
 				pendingClient = client
 			} else {
 				m.startGame(pendingClient, client)
+				pendingClient = nil
+			}
+		case client := <-m.removeClient: // Handle removal
+			if pendingClient == client {
 				pendingClient = nil
 			}
 		}

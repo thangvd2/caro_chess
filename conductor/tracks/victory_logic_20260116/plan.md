@@ -25,5 +25,13 @@ Fixed issues where online victory animations were displaying incorrectly (for lo
     - `GameBloc`: Guard clause in `_onPlacePiece`.
     - `GameBoardWidget`: Disable interactions if `state is GameOver`.
 
+### 4. Connection Reliability & UX
+- **Goal**: Fix server crashes on disconnect and improve matchmaking UI.
+- **Change**:
+    - **Server Crash**: Added `removeClient` channel to `Matchmaker` (server) to fix panic on closed channel.
+    - **UI Polish**: Added "Cancel" button to Finding Match screen.
+    - **UI Fix**: Correctly display "Creating room..." vs "Finding match..." using new `GameFindingMatch` property.
+    - **Web Stability**: Explicitly stop animations in `VictoryOverlay` and `ShakeWidget` to mitigate Flutter Web disposal errors.
+
 ## Artifacts
 - [Walkthrough](../../../.gemini/antigravity/brain/3b5be7b3-6c38-4ffc-b8c7-355a16c0fd43/walkthrough_victory_logic.md)

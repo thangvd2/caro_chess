@@ -84,11 +84,19 @@ class _GameControlsWidgetState extends State<GameControlsWidget> {
         }
 
         if (state is GameFindingMatch) {
-          return const Column(
+          return Column(
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 8),
-              Text("Finding match..."),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(
+                state.isCreatingRoom ? "Creating room..." : "Finding match...",
+                style: const TextStyle(fontSize: 18)
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => context.read<GameBloc>().add(ResetGame()),
+                child: const Text('Cancel'),
+              ),
             ],
           );
         }

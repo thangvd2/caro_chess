@@ -30,6 +30,7 @@ class _ShakeWidgetState extends State<ShakeWidget> with SingleTickerProviderStat
 
   @override
   void dispose() {
+    _controller.stop();
     _controller.dispose();
     super.dispose();
   }

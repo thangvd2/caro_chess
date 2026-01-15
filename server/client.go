@@ -96,6 +96,7 @@ func (c *Client) readPump() {
 			}
 		}
 		c.hub.unregister <- c
+		c.mm.removeClient <- c // Notify Matchmaker
 		c.conn.Close()
 	}()
 	c.conn.SetReadLimit(maxMessageSize)

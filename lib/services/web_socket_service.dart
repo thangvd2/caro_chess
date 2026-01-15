@@ -16,6 +16,7 @@ class WebSocketService {
       final separator = url.contains('?') ? '&' : '?';
       finalUrl = '$url${separator}token=$token';
     }
+    print("WebSocketService: Connecting to $finalUrl");
     _channel = WebSocketChannel.connect(Uri.parse(finalUrl));
   }
 
