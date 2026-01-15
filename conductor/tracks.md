@@ -30,5 +30,9 @@
 ## [x] Track: Social & Chat System
 *Link: [./conductor/archive/social_chat_20260113/plan.md](./conductor/archive/social_chat_20260113/plan.md)*
 
+
+## [x] Track: Victory Logic & Online Reliability
+*Link: [conductor/tracks/victory_logic_20260116/plan.md](conductor/tracks/victory_logic_20260116/plan.md)*
+
 ## [x] Track: Auth & Multiplayer UX Improvements
 *Link: [conductor/tracks/auth_multiplayer_20260115/plan.md](conductor/tracks/auth_multiplayer_20260115/plan.md)*

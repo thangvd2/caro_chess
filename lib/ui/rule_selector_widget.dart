@@ -15,19 +15,19 @@ class RuleSelectorWidget extends StatelessWidget {
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 8.0,
+          runSpacing: 8.0,
           children: [
             _RuleButton(
               label: "Standard",
               rule: GameRule.standard,
             ),
-            const SizedBox(width: 8),
             _RuleButton(
               label: "Free-style",
               rule: GameRule.freeStyle,
             ),
-            const SizedBox(width: 8),
             _RuleButton(
               label: "Caro (Vietnam)",
               rule: GameRule.caro,

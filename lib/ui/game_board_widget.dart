@@ -24,6 +24,7 @@ class GameBoardWidget extends StatelessWidget {
             winningLine: winningLine,
             onTap: (pos) {
               if (state is GameInProgress && state.isSpectating) return;
+              if (state is GameOver) return;
               HapticFeedback.lightImpact();
               context.read<GameBloc>().add(PlacePiece(pos));
             },
@@ -124,16 +125,14 @@ class BoardCell extends StatelessWidget {
           child: cell.isEmpty
               ? const SizedBox.shrink()
               : TweenAnimationBuilder<double>(
+                  key: ValueKey('${cell.position.x}_${cell.position.y}_${cell.owner}'),
                   tween: Tween(begin: 0.0, end: 1.0),
-                  duration: const Duration(milliseconds: 400),
+                  duration: const Duration(milliseconds: 300),
                   curve: Curves.elasticOut,
                   builder: (context, value, child) {
                     return Transform.scale(
                       scale: value,
-                      child: Opacity(
-                        opacity: value.clamp(0.0, 1.0),
-                        child: child,
-                      ),
+                      child: child,
                     );
                   },
                   child: _buildPiece(),

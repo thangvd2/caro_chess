@@ -216,6 +216,44 @@ func (c *Client) readPump() {
 						}
 					}
 				}
+			} else if msg["type"] == "LEAVE_ROOM" {
+				log.Printf("Received LEAVE_ROOM from Client %s", c.ID)
+				// Player explicitly leaving. Forfeit game.
+				if c.Session != nil {
+					log.Printf("Client %s has valid session. Processing forfeit.", c.ID)
+					var opponent *Client
+					var winnerStr string
+					var winner *Client
+
+					if c == c.Session.ClientX {
+						opponent = c.Session.ClientO
+						winnerStr = "O"
+						winner = c.Session.ClientO
+					} else {
+						opponent = c.Session.ClientX
+						winnerStr = "X"
+						winner = c.Session.ClientX
+					}
+
+					if opponent != nil {
+						log.Printf("Opponent found: %s. Sending GAME_OVER.", opponent.ID)
+						// Broadcast GAME_OVER to opponent
+						resp, _ := json.Marshal(map[string]interface{}{
+							"type":        "GAME_OVER",
+							"winner":      winnerStr,
+							"winningLine": nil,
+							"reason":      "opponent_left",
+						})
+						opponent.send <- resp
+
+						// Record verification and end session
+						c.mm.endGame(c.Session, winner)
+					} else {
+						log.Println("Opponent is nil. Cannot notify.")
+					}
+				} else {
+					log.Println("Client Session is nil. Ignoring LEAVE_ROOM.")
+				}
 			} else if msg["type"] == "CHAT_MESSAGE" {
 				if roomID, ok := msg["room_id"].(string); ok && roomID != "" {
 					c.rm.broadcast(roomID, message)
@@ -250,10 +288,10 @@ func (c *Client) writePump() {
 			}
 			w.Write(message)
 
-			n := len(c.send)
-			for i := 0; i < n; i++ {
-				w.Write(<-c.send)
-			}
+			// n := len(c.send)
+			// for i := 0; i < n; i++ {
+			// 	w.Write(<-c.send)
+			// }
 
 			if err := w.Close(); err != nil {
 				return
