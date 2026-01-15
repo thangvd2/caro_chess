@@ -113,7 +113,12 @@ class GameAuthLoading extends GameState {
   List<Object?> get props => [];
 }
 class GameAuthRequired extends GameState {}
-class GameFindingMatch extends GameState {}
+class GameFindingMatch extends GameState {
+  final bool isCreatingRoom;
+  const GameFindingMatch({this.isCreatingRoom = false});
+  @override
+  List<Object?> get props => [isCreatingRoom];
+}
 
 class GameWaitingInRoom extends GameState {
   final String code;
@@ -242,7 +247,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     _inventory = await _repository.loadInventory();
 
     if (_mode == GameMode.online) {
-      emit(GameFindingMatch());
+    emit(const GameFindingMatch());
       final token = await _repository.ensureAuthenticated();
       _socketService.connect(token: token);
       _socketSubscription?.cancel();
@@ -260,7 +265,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   Future<void> _onStartRoomCreation(StartRoomCreation event, Emitter<GameState> emit) async {
     _mode = GameMode.online;
     _messages.clear();
-    emit(GameFindingMatch());
+    emit(const GameFindingMatch(isCreatingRoom: true));
     final token = await _repository.ensureAuthenticated();
     _socketService.connect(token: token);
     _socketSubscription?.cancel();
@@ -274,7 +279,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     _mode = GameMode.online;
     _currentRoomCode = event.code;
     _messages.clear();
-    emit(GameFindingMatch());
+    emit(const GameFindingMatch());
     final token = await _repository.ensureAuthenticated();
     _socketService.connect(token: token);
     _socketSubscription?.cancel();

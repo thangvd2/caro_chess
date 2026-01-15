@@ -33,6 +33,7 @@ class _VictoryOverlayState extends State<VictoryOverlay> {
 
   @override
   void dispose() {
+    _controller.stop();
     _controller.dispose();
     super.dispose();
   }

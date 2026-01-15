@@ -17,6 +17,7 @@ import 'models/user_profile.dart';
 import 'models/game_models.dart';
 import 'ui/login_screen.dart';
 import 'ui/home_screen.dart';
+import 'ui/transitions/custom_page_transition.dart';
 
 void main() {
   runApp(const CaroChessApp());
@@ -58,9 +59,23 @@ class AppContent extends StatelessWidget {
         }
         
         return AnimatedSwitcher(
-          duration: const Duration(milliseconds: 500),
+          duration: const Duration(milliseconds: 600),
+          switchInCurve: Curves.easeOutQuart,
+          switchOutCurve: Curves.easeInQuart,
           transitionBuilder: (Widget child, Animation<double> animation) {
-            return FadeTransition(opacity: animation, child: child);
+             // Slide from bottom (0.1) to top (0)
+             final offsetAnimation = Tween<Offset>(
+               begin: const Offset(0.0, 0.1),
+               end: Offset.zero,
+             ).animate(animation);
+             
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                  position: offsetAnimation,
+                  child: child
+              ),
+            );
           },
           child: child,
         );
@@ -86,9 +101,7 @@ class GamePage extends StatelessWidget {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => const HistoryScreen(),
-                      ),
+                      CustomPageTransition(page: const HistoryScreen()),
                     );
                   },
                 ),
@@ -97,9 +110,7 @@ class GamePage extends StatelessWidget {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => const LeaderboardScreen(),
-                      ),
+                      CustomPageTransition(page: const LeaderboardScreen()),
                     );
                   },
                 ),
@@ -108,9 +119,7 @@ class GamePage extends StatelessWidget {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => const ShopScreen(),
-                      ),
+                      CustomPageTransition(page: const ShopScreen()),
                     );
                   },
                 ),
@@ -127,11 +136,9 @@ class GamePage extends StatelessWidget {
                     
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => ProfileScreen(
-                          profile: profile ?? const UserProfile(id: "Local Player"),
-                        ),
-                      ),
+                      CustomPageTransition(page: ProfileScreen(
+                        profile: profile ?? const UserProfile(id: "Local Player"),
+                      )),
                     );
                   },
                 ),
