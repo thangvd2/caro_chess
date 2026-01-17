@@ -198,6 +198,7 @@ func (c *Client) readPump() {
 				totalTime := 5 * time.Minute
 				increment := 5 * time.Second
 				turnLimit := 30 * time.Second
+				rule := engine.RuleStandard
 
 				if t, ok := msg["total_time"].(float64); ok {
 					totalTime = time.Duration(t) * time.Second
@@ -208,8 +209,11 @@ func (c *Client) readPump() {
 				if l, ok := msg["turn_limit"].(float64); ok {
 					turnLimit = time.Duration(l) * time.Second
 				}
+				if r, ok := msg["rule"].(string); ok {
+					rule = engine.GameRule(r)
+				}
 
-				code, _ := c.rm.createRoom(c, totalTime, increment, turnLimit)
+				code, _ := c.rm.createRoom(c, totalTime, increment, turnLimit, rule)
 				resp, _ := json.Marshal(map[string]interface{}{
 					"type":       "ROOM_CREATED",
 					"code":       code,

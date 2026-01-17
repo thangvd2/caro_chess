@@ -4,6 +4,7 @@ import '../bloc/game_bloc.dart';
 import '../models/user_profile.dart';
 import '../models/game_models.dart';
 import 'history_screen.dart';
+import '../config/app_config.dart';
 import 'leaderboard_screen.dart';
 import 'shop_screen.dart';
 import 'profile_screen.dart';
@@ -17,6 +18,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   GameRule _selectedRule = GameRule.standard;
+  AIDifficulty _selectedDifficulty = AIDifficulty.medium;
 
   @override
   Widget build(BuildContext context) {
@@ -48,43 +50,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 32),
                   
                   // Rule Selector
-                  const Text("Select Game Rule", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  SegmentedButton<GameRule>(
-                    segments: const [
-                      ButtonSegment(value: GameRule.standard, label: Text("Standard")),
-                      ButtonSegment(value: GameRule.freeStyle, label: Text("Free-style")),
-                      ButtonSegment(value: GameRule.caro, label: Text("Caro")),
-                    ],
-                    selected: {_selectedRule},
-                    onSelectionChanged: (Set<GameRule> newSelection) {
-                      setState(() {
-                        _selectedRule = newSelection.first;
-                      });
-                    },
-                    showSelectedIcon: false,
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      _getRuleDescription(_selectedRule),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                  ),
-
-                  
                   const SizedBox(height: 32),
                   _MenuButton(
                     icon: Icons.people,
                     label: "Play Local PvP",
                     onPressed: () {
-                       context.read<GameBloc>().add(StartGame(mode: GameMode.localPvP, rule: _selectedRule));
+                       _showGameSetupDialog(context, GameMode.localPvP);
                     },
                   ),
                   const SizedBox(height: 16),
@@ -92,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     icon: Icons.computer,
                     label: "Play vs AI",
                     onPressed: () {
-                      context.read<GameBloc>().add(StartGame(mode: GameMode.vsAI, rule: _selectedRule));
+                      _showGameSetupDialog(context, GameMode.vsAI);
                     },
                   ),
                   const SizedBox(height: 16),
@@ -100,16 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     icon: Icons.public,
                     label: "Play Online",
                     onPressed: () {
-                       // Online matchmaking currently doesn't support rule filtering in the StartGame event blindly?
-                       // Actually StartGame logic for online is: send FIND_MATCH.
-                       // Server Matchmaker needs to know the rule. 
-                       // Currently client sends FIND_MATCH type. 
-                       // We might need to update Server to accept parameters. 
-                       // For now, let's pass the rule to StartGame, even if backend implementation is pending.
-                       // Looking at GameBloc:
-                       // if (_mode == GameMode.online) { ... _socketService.send({'type': 'FIND_MATCH'}); }
-                       // So rule is ignored for now. That is a separate task.
-                       context.read<GameBloc>().add(StartGame(mode: GameMode.online, rule: _selectedRule));
+                       _showGameSetupDialog(context, GameMode.online);
                     },
                   ),
                   const SizedBox(height: 16),
@@ -117,10 +79,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     icon: Icons.add_box,
                     label: "Create Room",
                     onPressed: () {
-                       // Similarly, Create Room needs rule.
-                       context.read<GameBloc>().add(StartRoomCreation());
+                       _showRoomCreationDialog(context);
                     },
                   ),
+
                   const SizedBox(height: 16),
                   _MenuButton(
                     icon: Icons.login, 
@@ -176,6 +138,147 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       )
     );
+  }
+
+  void _showGameSetupDialog(BuildContext context, GameMode mode) {
+    GameRule tempRule = _selectedRule;
+    AIDifficulty tempDifficulty = _selectedDifficulty;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: Text(mode == GameMode.vsAI ? "Game Setup" : "Select Rules"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text("Game Rule", style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                SegmentedButton<GameRule>(
+                  segments: const [
+                    ButtonSegment(value: GameRule.standard, label: Text("Standard")),
+                    ButtonSegment(value: GameRule.freeStyle, label: Text("Free")),
+                    ButtonSegment(value: GameRule.caro, label: Text("Caro")),
+                  ],
+                  selected: {tempRule},
+                  onSelectionChanged: (Set<GameRule> newSelection) {
+                    setState(() {
+                      tempRule = newSelection.first;
+                    });
+                  },
+                  showSelectedIcon: false,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _getRuleDescription(tempRule),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                if (mode == GameMode.vsAI) ...[
+                  const SizedBox(height: 24),
+                  const Text("AI Difficulty", style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  SegmentedButton<AIDifficulty>(
+                    segments: const [
+                      ButtonSegment(value: AIDifficulty.easy, label: Text("Easy")),
+                      ButtonSegment(value: AIDifficulty.medium, label: Text("Med")),
+                      ButtonSegment(value: AIDifficulty.hard, label: Text("Hard")),
+                    ],
+                    selected: {tempDifficulty},
+                    onSelectionChanged: (Set<AIDifficulty> newSelection) {
+                      setState(() {
+                        tempDifficulty = newSelection.first;
+                      });
+                    },
+                    showSelectedIcon: false,
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+              ElevatedButton(
+                onPressed: () {
+                  // Update main state to remember choice
+                  this.setState(() {
+                    _selectedRule = tempRule;
+                    if (mode == GameMode.vsAI) {
+                      _selectedDifficulty = tempDifficulty;
+                    }
+                  });
+                  Navigator.pop(ctx);
+                  context.read<GameBloc>().add(StartGame(mode: mode, rule: tempRule, difficulty: tempDifficulty));
+                },
+                child: const Text("Start Game"),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+  
+  void _showRoomCreationDialog(BuildContext context) {
+      // Room creation implies Online Rule selection + Timer (StartRoomCreation event)
+      // We will assume default timer for now or add timer selection?
+      // StartRoomCreation supports time.
+      // Let's add Rule Selector here too.
+      GameRule tempRule = _selectedRule;
+
+      showDialog(
+        context: context,
+        builder: (ctx) => StatefulBuilder(
+           builder: (context, setState) {
+             return AlertDialog(
+                title: const Text("Create Room"),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text("Select Game Rule", style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    SegmentedButton<GameRule>(
+                      segments: const [
+                        ButtonSegment(value: GameRule.standard, label: Text("Standard")),
+                        ButtonSegment(value: GameRule.freeStyle, label: Text("Free")),
+                        ButtonSegment(value: GameRule.caro, label: Text("Caro")),
+                      ],
+                      selected: {tempRule},
+                      onSelectionChanged: (Set<GameRule> newSelection) {
+                        setState(() {
+                          tempRule = newSelection.first;
+                        });
+                      },
+                      showSelectedIcon: false,
+                    ),
+                    const SizedBox(height: 8),
+                     Text(
+                      _getRuleDescription(tempRule),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                ),
+                actions: [
+                   TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+                   ElevatedButton(
+                      onPressed: () {
+                         this.setState(() {
+                           _selectedRule = tempRule;
+                         });
+                         Navigator.pop(ctx);
+                         // Note: StartRoomCreation needs to be updated to accept Rule!
+                         // For now, I'm passing it, but I need to update GameBloc next.
+                         // Using default timers for now.
+                         context.read<GameBloc>().add(StartRoomCreation(rule: tempRule));
+                      }, 
+                      child: const Text("Create")
+                   ),
+                ],
+             );
+           }
+        )
+      );
   }
 
   String _getRuleDescription(GameRule rule) {

@@ -30,14 +30,14 @@ type GameSession struct {
 	Spectators map[*Client]bool
 }
 
-func newGameSession(x, o *Client, totalTime, increment, moveLimit time.Duration) *GameSession {
+func newGameSession(x, o *Client, totalTime, increment, moveLimit time.Duration, rule engine.GameRule) *GameSession {
 	return &GameSession{
 		ClientX:       x,
 		ClientO:       o,
 		PlayerXID:     x.ID,
 		PlayerOID:     o.ID,
 		Turn:          "X",
-		Engine:        engine.NewGameEngine(15, 15, engine.RuleStandard),
+		Engine:        engine.NewGameEngine(15, 15, rule),
 		Spectators:    make(map[*Client]bool),
 		TotalTimeX:    totalTime,
 		TotalTimeO:    totalTime,

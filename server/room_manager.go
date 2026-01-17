@@ -22,7 +22,7 @@ func newRoomManager() *RoomManager {
 	}
 }
 
-func (rm *RoomManager) createRoom(host *Client, totalTime, increment, moveLimit time.Duration) (string, error) {
+func (rm *RoomManager) createRoom(host *Client, totalTime, increment, moveLimit time.Duration, rule engine.GameRule) (string, error) {
 	rm.mu.Lock()
 	defer rm.mu.Unlock()
 
@@ -38,7 +38,7 @@ func (rm *RoomManager) createRoom(host *Client, totalTime, increment, moveLimit 
 		ClientX:       host,
 		PlayerXID:     host.ID,
 		Turn:          "X",
-		Engine:        engine.NewGameEngine(15, 15, engine.RuleStandard),
+		Engine:        engine.NewGameEngine(15, 15, rule),
 		Spectators:    make(map[*Client]bool),
 		TotalTimeX:    totalTime,
 		TotalTimeO:    totalTime,

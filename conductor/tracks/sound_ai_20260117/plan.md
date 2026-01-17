@@ -41,4 +41,9 @@ Refining the user experience with audio feedback for critical game states (Game 
 - [x] **AI Engine**
     - [x] Implement Alpha-Beta Pruning in `MinimaxSolver` (Already present, optimized usage)
     - [x] Enhance `EvaluationService` scoring (Verified robust)
+    - [x] Enhance `EvaluationService` scoring (Verified robust)
     - [x] Verify performance (Depth 3 should be instant, Depth 4 < 2s)
+- [x] **UI & Game Rules Polish**
+    - [x] Refactor Game Setup to use Pop-up Dialogs
+    - [x] Implement "Caro" Rule logic in `EvaluationService`
+    - [x] Update Server to support `GameRule` in `CREATE_ROOM`

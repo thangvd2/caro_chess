@@ -9,11 +9,12 @@ import 'move_generator.dart';
 export '../config/app_config.dart' show AIDifficulty;
 
 class AIService {
-  Future<Position> getBestMove(GameBoard board, Player player, {AIDifficulty difficulty = AppConfig.defaultAIDifficulty}) async {
+  Future<Position> getBestMove(GameBoard board, Player player, {AIDifficulty difficulty = AppConfig.defaultAIDifficulty, GameRule rule = GameRule.standard}) async {
     return compute(_runMinimax, {
       'board': board,
       'player': player,
       'difficulty': difficulty,
+      'rule': rule,
     });
   }
 }
@@ -22,6 +23,7 @@ Position _runMinimax(Map<String, dynamic> params) {
   final GameBoard board = params['board'];
   final Player player = params['player'];
   final AIDifficulty difficulty = params['difficulty'];
+  final GameRule rule = params['rule'];
 
   final depth = AppConfig.aiDepths[difficulty] ?? 2;
 
@@ -30,5 +32,5 @@ Position _runMinimax(Map<String, dynamic> params) {
     moveGenerator: MoveGenerator(),
   );
 
-  return solver.getBestMove(board, player, depth: depth);
+  return solver.getBestMove(board, player, depth: depth, rule: rule);
 }

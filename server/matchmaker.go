@@ -9,6 +9,7 @@ import (
 
 	"caro_chess_server/db"
 	"caro_chess_server/elo"
+	"caro_chess_server/engine"
 )
 
 type Matchmaker struct {
@@ -49,7 +50,7 @@ func (m *Matchmaker) run() {
 
 func (m *Matchmaker) startGame(c1, c2 *Client) {
 	// Default Quick Match: 5 minutes + 5 seconds, 30s strict move limit
-	session := newGameSession(c1, c2, 5*time.Minute, 5*time.Second, 30*time.Second)
+	session := newGameSession(c1, c2, 5*time.Minute, 5*time.Second, 30*time.Second, engine.RuleStandard)
 
 	// Register to set up callbacks
 	m.RegisterSession(session)

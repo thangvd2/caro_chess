@@ -36,15 +36,17 @@ class StartRoomCreation extends GameEvent {
   final Duration totalTime;
   final Duration increment;
   final Duration turnLimit;
+  final GameRule rule;
   
   const StartRoomCreation({
       this.totalTime = const Duration(minutes: 5),
       this.increment = const Duration(seconds: 5),
       this.turnLimit = const Duration(seconds: 30),
+      this.rule = GameRule.standard,
   });
 
   @override
-  List<Object?> get props => [totalTime, increment, turnLimit];
+  List<Object?> get props => [totalTime, increment, turnLimit, rule];
 }
 
 class JoinRoomRequested extends GameEvent {
@@ -303,7 +305,10 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         add(LogoutRequested()); 
       });
 
-      _socketService.send({'type': 'FIND_MATCH'});
+      _socketService.send({
+        'type': 'FIND_MATCH',
+        'rule': event.rule.name, // Send selected rule
+      });
     } else {
       _engine = GameEngine(rule: event.rule);
       _saveState();
@@ -329,6 +334,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         'total_time': event.totalTime.inSeconds.toDouble(),
         'increment': event.increment.inSeconds.toDouble(),
         'turn_limit': event.turnLimit.inSeconds.toDouble(),
+        'rule': event.rule.name,
     });
   }
 
@@ -639,7 +645,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     emit(_buildInProgressState(isAIThinking: true));
     // Artificial delay to make AI feel more natural
     await Future.delayed(const Duration(milliseconds: 1000));
-    final move = await _aiService.getBestMove(_engine!.board, Player.o, difficulty: _difficulty);
+    final move = await _aiService.getBestMove(_engine!.board, Player.o, difficulty: _difficulty, rule: _engine!.rule);
     add(PlacePiece(move));
   }
 

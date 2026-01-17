@@ -2,7 +2,9 @@
 
 ## Active Tracks
 
-## [ ] Track: Sound Polish & AI
+## Completed Tracks
+
+## [x] Track: Sound Polish, AI & Game Setup
 *Link: [conductor/tracks/sound_ai_20260117/plan.md](conductor/tracks/sound_ai_20260117/plan.md)*## Completed Tracks
 
 ## [x] Track: Game Turn Timer
