@@ -13,7 +13,7 @@ import 'ui/history_screen.dart';
 import 'ui/leaderboard_screen.dart';
 import 'ui/shop_screen.dart';
 import 'models/user_profile.dart';
-import 'models/user_profile.dart';
+
 import 'models/game_models.dart';
 import 'ui/login_screen.dart';
 import 'ui/home_screen.dart';

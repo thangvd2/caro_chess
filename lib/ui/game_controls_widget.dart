@@ -3,6 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/game_bloc.dart';
 import '../models/game_models.dart';
 import '../ai/ai_service.dart';
+import 'player_timer_widget.dart';
+import 'time_limit_selector_dialog.dart';
+
+
 
 class GameControlsWidget extends StatefulWidget {
   const GameControlsWidget({super.key});
@@ -67,12 +71,26 @@ class _GameControlsWidgetState extends State<GameControlsWidget> {
                 children: [
                   ElevatedButton(
                     onPressed: () => context.read<GameBloc>().add(const StartGame(mode: GameMode.online)),
-                    child: const Text('Quick Match'),
+                    child: const Text('Quick Match (5m+5s)'),
+
                   ),
                   ElevatedButton(
-                    onPressed: () => context.read<GameBloc>().add(StartRoomCreation()),
+                    onPressed: () async {
+                       final preset = await showDialog<TimePreset>(
+                          context: context,
+                          builder: (_) => const TimeLimitSelectorDialog(),
+                       );
+                       if (preset != null && context.mounted) {
+                          context.read<GameBloc>().add(StartRoomCreation(
+                              totalTime: preset.totalTime,
+                              increment: preset.increment,
+                              turnLimit: preset.turnLimit
+                          ));
+                       }
+                    },
                     child: const Text('Create Room'),
                   ),
+
                   ElevatedButton(
                     onPressed: () => _showJoinRoomDialog(context),
                     child: const Text('Join Room'),
@@ -145,6 +163,7 @@ class _GameControlsWidgetState extends State<GameControlsWidget> {
               if (state.canRedo) onRedo = () => context.read<GameBloc>().add(RedoMove());
           }
         } else if (state is GameOver) {
+
           statusText = state.winner != null ? "Winner: ${state.winner == Player.x ? 'X' : 'O'}" : "Draw!";
           
           if (state.mode == GameMode.online && state.myPlayer != null && state.winner != null) {
@@ -165,8 +184,30 @@ class _GameControlsWidgetState extends State<GameControlsWidget> {
           children: [
             Text(statusText, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
+            if (state is GameInProgress && state.mode == GameMode.online) ...[
+                Row(
+                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                   children: [
+                      PlayerTimerWidget(
+                          label: "Player X",
+                          timeRemaining: state.timeRemainingX,
+                          isActive: state.currentPlayer == Player.x,
+                          turnTimeRemaining: state.currentPlayer == Player.x ? state.currentTurnTimeRemaining : null,
+                      ),
+                      PlayerTimerWidget(
+                          label: "Player O",
+                          timeRemaining: state.timeRemainingO,
+                          isActive: state.currentPlayer == Player.o,
+                          turnTimeRemaining: state.currentPlayer == Player.o ? state.currentTurnTimeRemaining : null,
+                      ),
+
+                   ],
+                ),
+                const SizedBox(height: 8),
+            ],
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
+
               children: [
                 ElevatedButton(onPressed: onUndo, child: const Text('Undo')),
                 const SizedBox(width: 16),

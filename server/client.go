@@ -138,11 +138,13 @@ func (c *Client) readPump() {
 					continue
 				}
 
-				if c.Session.Engine.PlacePiece(engine.Position{X: x, Y: y}) {
+				if success := c.Session.MakeMove(x, y); success {
 					resp, _ := json.Marshal(map[string]interface{}{
-						"type": "MOVE_MADE",
-						"x":    x,
-						"y":    y,
+						"type":   "MOVE_MADE",
+						"x":      x,
+						"y":      y,
+						"time_x": c.Session.TotalTimeX.Seconds(),
+						"time_o": c.Session.TotalTimeO.Seconds(),
 					})
 
 					// Send only to players in session
@@ -192,8 +194,29 @@ func (c *Client) readPump() {
 			} else if msg["type"] == "FIND_MATCH" {
 				c.mm.addClient <- c
 			} else if msg["type"] == "CREATE_ROOM" {
-				code, _ := c.rm.createRoom(c)
-				resp, _ := json.Marshal(map[string]string{"type": "ROOM_CREATED", "code": code})
+				// Default defaults
+				totalTime := 5 * time.Minute
+				increment := 5 * time.Second
+				turnLimit := 30 * time.Second
+
+				if t, ok := msg["total_time"].(float64); ok {
+					totalTime = time.Duration(t) * time.Second
+				}
+				if i, ok := msg["increment"].(float64); ok {
+					increment = time.Duration(i) * time.Second
+				}
+				if l, ok := msg["turn_limit"].(float64); ok {
+					turnLimit = time.Duration(l) * time.Second
+				}
+
+				code, _ := c.rm.createRoom(c, totalTime, increment, turnLimit)
+				resp, _ := json.Marshal(map[string]interface{}{
+					"type":       "ROOM_CREATED",
+					"code":       code,
+					"total_time": totalTime.Seconds(),
+					"increment":  increment.Seconds(),
+					"turn_limit": turnLimit.Seconds(),
+				})
 				c.send <- resp
 			} else if msg["type"] == "JOIN_ROOM" {
 				code := msg["code"].(string)
@@ -213,6 +236,7 @@ func (c *Client) readPump() {
 					} else {
 						// New game or start
 						if session.ClientX != nil && session.ClientO != nil {
+							session.StartGame() // Start Timers
 							sendMatchFound(session)
 						}
 					}
@@ -320,15 +344,26 @@ func serveWs(hub *Hub, mm *Matchmaker, rm *RoomManager, w http.ResponseWriter, r
 }
 
 func sendMatchFound(session *GameSession) {
-	msg1, _ := json.Marshal(map[string]string{"type": "MATCH_FOUND", "color": "X"})
+	msg1, _ := json.Marshal(map[string]interface{}{
+		"type":       "MATCH_FOUND",
+		"color":      "X",
+		"total_time": session.TotalTimeX.Seconds(),
+		"turn_limit": session.MoveTimeLimit.Seconds(),
+	})
 	if session.ClientX != nil {
 		session.ClientX.send <- msg1
 	}
 
-	msg2, _ := json.Marshal(map[string]string{"type": "MATCH_FOUND", "color": "O"})
+	msg2, _ := json.Marshal(map[string]interface{}{
+		"type":       "MATCH_FOUND",
+		"color":      "O",
+		"total_time": session.TotalTimeO.Seconds(),
+		"turn_limit": session.MoveTimeLimit.Seconds(),
+	})
 	if session.ClientO != nil {
 		session.ClientO.send <- msg2
 	}
+
 }
 
 func sendGameSync(c *Client, session *GameSession) {
@@ -348,10 +383,12 @@ func sendGameSync(c *Client, session *GameSession) {
 	}
 
 	resp, _ := json.Marshal(map[string]interface{}{
-		"type":    "GAME_SYNC",
-		"color":   myColor,
-		"history": session.Engine.History,
-		"turn":    session.Engine.CurrentPlayer, // engine holds strict turn
+		"type":       "GAME_SYNC",
+		"color":      myColor,
+		"history":    session.Engine.History,
+		"turn":       session.Engine.CurrentPlayer,
+		"turn_limit": session.MoveTimeLimit.Seconds(),
 	})
+
 	c.send <- resp
 }

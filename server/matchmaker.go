@@ -48,11 +48,14 @@ func (m *Matchmaker) run() {
 }
 
 func (m *Matchmaker) startGame(c1, c2 *Client) {
-	session := newGameSession(c1, c2)
-	m.sessions[c1] = session
-	m.sessions[c2] = session
-	c1.Session = session
-	c2.Session = session
+	// Default Quick Match: 5 minutes + 5 seconds, 30s strict move limit
+	session := newGameSession(c1, c2, 5*time.Minute, 5*time.Second, 30*time.Second)
+
+	// Register to set up callbacks
+	m.RegisterSession(session)
+
+	// Start Timer
+	session.StartGame()
 
 	msg1, _ := json.Marshal(map[string]string{"type": "MATCH_FOUND", "color": "X"})
 	c1.send <- msg1
@@ -80,12 +83,39 @@ func (m *Matchmaker) RegisterSession(session *GameSession) {
 		m.sessions[session.ClientO] = session
 		session.ClientO.Session = session
 	}
+
+	// Set Timeout Callback
+	session.TimeoutCallback = func(winnerStr string) {
+		var winner *Client
+		if winnerStr == "X" {
+			winner = session.ClientX
+		} else {
+			winner = session.ClientO
+		}
+
+		// Broadcast GAME_OVER (Timeout)
+		msg, _ := json.Marshal(map[string]interface{}{
+			"type":   "GAME_OVER",
+			"winner": winnerStr,
+			"reason": "timeout",
+		})
+		if session.ClientX != nil {
+			session.ClientX.send <- msg
+		}
+		if session.ClientO != nil {
+			session.ClientO.send <- msg
+		}
+
+		m.endGame(session, winner)
+	}
 }
 
 func (m *Matchmaker) endGame(session *GameSession, winner *Client) {
 	if session == nil {
 		return
 	}
+	session.StopGame() // Stop all timers
+
 	// Determine Loser (if any)
 	if winner != nil {
 		// Logic to identify loser if needed
