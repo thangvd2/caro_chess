@@ -35,4 +35,12 @@ class AudioService {
   Future<void> playLose() async {
     await _playSound('audio/lose.mp3');
   }
+
+  Future<void> playGameStart() async {
+    await _playSound('audio/start.wav');
+  }
+
+  Future<void> playTimeTick() async {
+    await _playSound('audio/tick.wav');
+  }
 }
