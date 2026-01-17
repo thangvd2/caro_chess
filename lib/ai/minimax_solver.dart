@@ -18,12 +18,22 @@ class MinimaxSolver {
     int bestScore = -999999999;
     Position bestMove = possibleMoves.first;
     
-    possibleMoves.shuffle();
+    // Sort moves to prioritize center (better for pruning)
+    final center = Position(x: board.columns ~/ 2, y: board.rows ~/ 2);
+    possibleMoves.sort((a, b) {
+      final distA = (a.x - center.x).abs() + (a.y - center.y).abs();
+      final distB = (b.x - center.x).abs() + (b.y - center.y).abs();
+      return distA.compareTo(distB);
+    });
 
     for (final move in possibleMoves) {
       board.cells[move.y][move.x] = Cell(position: move, owner: player);
       
-      int score = _minimax(board, depth - 1, false, -999999999, 999999999, player);
+      // Use alpha-beta window from the start? 
+      // Yes, technically for the root node, alpha is -infinity, beta is +infinity.
+      // But we can update alpha as we find better scores.
+      
+      int score = _minimax(board, depth - 1, false, bestScore > -999999999 ? bestScore : -999999999, 999999999, player);
       
       board.cells[move.y][move.x] = Cell(position: move); // Revert
       
@@ -46,6 +56,14 @@ class MinimaxSolver {
 
     List<Position> possibleMoves = moveGenerator.generateMoves(board);
     if (possibleMoves.isEmpty) return evaluator.evaluate(board, player);
+
+    // Sort moves to prioritize center (better for pruning)
+    final center = Position(x: board.columns ~/ 2, y: board.rows ~/ 2);
+    possibleMoves.sort((a, b) {
+      final distA = (a.x - center.x).abs() + (a.y - center.y).abs();
+      final distB = (b.x - center.x).abs() + (b.y - center.y).abs();
+      return distA.compareTo(distB);
+    });
 
     if (isMaximizing) {
       int maxEval = -999999999;

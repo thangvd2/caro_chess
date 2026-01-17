@@ -358,6 +358,10 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       _currentRoomCode = msg['code'];
       emit(GameWaitingInRoom(msg['code']));
     } else if (msg['type'] == 'MATCH_FOUND') {
+       _audioService.playGameStart();
+
+      _currentRoomCode = msg['code'];
+      // Continue to initialization...
       _myPlayer = msg['color'] == 'X' ? Player.x : Player.o;
       _engine = GameEngine(rule: GameRule.standard);
       
@@ -522,8 +526,9 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       }
       
       // Ensure we explicitly emit GameOver even if local engine didn't catch it logic-wise (e.g. timeout)
-      emit(GameOver(
-        board: _engine!.board,
+      if (_engine != null) {
+        emit(GameOver(
+          board: _engine!.board,
         winner: winner,
         rule: _engine!.rule,
         mode: _mode,
@@ -534,6 +539,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         myPlayer: _myPlayer,
         winReason: reason,
       ));
+      }
     }
   }
 
@@ -799,6 +805,22 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       if (_currentTurnTimeRemaining != null) {
           _currentTurnTimeRemaining = _currentTurnTimeRemaining! - const Duration(seconds: 1);
           if (_currentTurnTimeRemaining!.isNegative) _currentTurnTimeRemaining = Duration.zero;
+      }
+
+      
+      // Play tick sound if time is low (<= 10s)
+      bool shouldTick = false;
+      if (_engine!.currentPlayer == Player.x && _timeRemainingX != null && _timeRemainingX!.inSeconds <= 10 && _timeRemainingX!.inSeconds > 0) {
+          shouldTick = true;
+      } else if (_engine!.currentPlayer == Player.o && _timeRemainingO != null && _timeRemainingO!.inSeconds <= 10 && _timeRemainingO!.inSeconds > 0) {
+          shouldTick = true;
+      }
+
+      if (shouldTick) {
+          // Optimization: tick only if it's my turn OR I'm spectator
+          if (_myPlayer == null || _myPlayer == _engine!.currentPlayer) {
+             _audioService.playTimeTick();
+          }
       }
 
       emit(_buildInProgressState());
