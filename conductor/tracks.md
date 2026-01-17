@@ -4,6 +4,9 @@
 
 ## Active Tracks
 
+## [ ] Track: Game Turn Timer
+*Link: [conductor/tracks/game_timer_20260116/plan.md](conductor/tracks/game_timer_20260116/plan.md)*
+
 ## Completed Tracks
 
 ## [x] Track: Spectator Mode

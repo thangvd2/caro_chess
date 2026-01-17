@@ -32,7 +32,21 @@ class StartGame extends GameEvent {
   List<Object?> get props => [rule, mode, difficulty];
 }
 
-class StartRoomCreation extends GameEvent {}
+class StartRoomCreation extends GameEvent {
+  final Duration totalTime;
+  final Duration increment;
+  final Duration turnLimit;
+  
+  const StartRoomCreation({
+      this.totalTime = const Duration(minutes: 5),
+      this.increment = const Duration(seconds: 5),
+      this.turnLimit = const Duration(seconds: 30),
+  });
+
+  @override
+  List<Object?> get props => [totalTime, increment, turnLimit];
+}
+
 class JoinRoomRequested extends GameEvent {
   final String code;
   const JoinRoomRequested(this.code);
@@ -100,6 +114,8 @@ class SendChatMessage extends GameEvent {
   List<Object?> get props => [text];
 }
 
+class TimerTicked extends GameEvent {}
+
 // States
 abstract class GameState extends Equatable {
   const GameState();
@@ -141,6 +157,8 @@ class GameInProgress extends GameState {
   final bool canRedo;
   final bool isSpectating;
   final bool isAIThinking;
+  final Duration? timeRemainingX;
+  final Duration? timeRemainingO;
 
   const GameInProgress({
     required this.board,
@@ -156,10 +174,19 @@ class GameInProgress extends GameState {
     this.canRedo = false,
     this.isSpectating = false,
     this.isAIThinking = false,
+    this.timeRemainingX,
+    this.timeRemainingO,
+    this.turnLimit,
+    this.currentTurnTimeRemaining,
   });
 
+  final Duration? turnLimit;
+  final Duration? currentTurnTimeRemaining;
+
+
   @override
-  List<Object?> get props => [board, currentPlayer, rule, mode, difficulty, myPlayer, userProfile, inventory, messages, canUndo, canRedo, isSpectating, isAIThinking];
+  List<Object?> get props => [board, currentPlayer, rule, mode, difficulty, myPlayer, userProfile, inventory, messages, canUndo, canRedo, isSpectating, isAIThinking, timeRemainingX, timeRemainingO, turnLimit, currentTurnTimeRemaining];
+
 }
 
 class GameOver extends GameState {
@@ -206,7 +233,15 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   UserProfile? _userProfile;
   Inventory _inventory = const Inventory();
   String? _currentRoomCode;
+
   final List<ChatMessage> _messages = [];
+  Timer? _timer;
+  Duration? _timeRemainingX;
+  Duration? _timeRemainingO;
+  Duration? _turnLimit;
+  Duration? _currentTurnTimeRemaining;
+
+
 
   GameBloc({GameRepository? repository, AIService? aiService, WebSocketService? socketService, AudioService? audioService}) 
       : _repository = repository ?? GameRepository(),
@@ -229,14 +264,19 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     on<PurchaseItemRequested>(_onPurchaseItemRequested);
     on<EquipItemRequested>(_onEquipItemRequested);
     on<UnlockItem>(_onUnlockItem);
+
     on<SendChatMessage>(_onSendChatMessage);
+    on<TimerTicked>(_onTimerTicked);
   }
+
 
   @override
   Future<void> close() {
     _socketSubscription?.cancel();
+    _timer?.cancel();
     return super.close();
   }
+
 
   Future<void> _onStartGame(StartGame event, Emitter<GameState> emit) async {
     _mode = event.mode;
@@ -245,6 +285,10 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     _currentRoomCode = null;
     _messages.clear();
     _inventory = await _repository.loadInventory();
+    _timer?.cancel();
+    _timeRemainingX = null;
+    _timeRemainingO = null;
+
 
     if (_mode == GameMode.online) {
     emit(const GameFindingMatch());
@@ -253,7 +297,12 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       _socketSubscription?.cancel();
       _socketSubscription = _socketService.stream.listen((msg) {
         add(SocketMessageReceived(msg));
+      }, onError: (error) {
+        print("GameBloc: Socket Error: $error");
+        // If error is authentication related (401), or connection failed, logout to clear stale token
+        add(LogoutRequested()); 
       });
+
       _socketService.send({'type': 'FIND_MATCH'});
     } else {
       _engine = GameEngine(rule: event.rule);
@@ -271,9 +320,18 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     _socketSubscription?.cancel();
     _socketSubscription = _socketService.stream.listen((msg) {
       add(SocketMessageReceived(msg));
+    }, onError: (error) {
+        print("GameBloc: Socket Error (Room Creation): $error");
+        add(LogoutRequested());
     });
-    _socketService.send({'type': 'CREATE_ROOM'});
+    _socketService.send({
+        'type': 'CREATE_ROOM',
+        'total_time': event.totalTime.inSeconds.toDouble(),
+        'increment': event.increment.inSeconds.toDouble(),
+        'turn_limit': event.turnLimit.inSeconds.toDouble(),
+    });
   }
+
 
   Future<void> _onJoinRoomRequested(JoinRoomRequested event, Emitter<GameState> emit) async {
     _mode = GameMode.online;
@@ -285,6 +343,9 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     _socketSubscription?.cancel();
     _socketSubscription = _socketService.stream.listen((msg) {
       add(SocketMessageReceived(msg));
+    }, onError: (error) {
+        print("GameBloc: Socket Error (Join Room): $error");
+        add(LogoutRequested());
     });
     _socketService.send({'type': 'JOIN_ROOM', 'code': event.code});
   }
@@ -299,8 +360,36 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     } else if (msg['type'] == 'MATCH_FOUND') {
       _myPlayer = msg['color'] == 'X' ? Player.x : Player.o;
       _engine = GameEngine(rule: GameRule.standard);
+      
+      if (msg['total_time'] != null) {
+          final totalSec = (msg['total_time'] as num).toDouble();
+          final duration = Duration(milliseconds: (totalSec * 1000).toInt());
+          _timeRemainingX = duration;
+          _timeRemainingO = duration;
+          
+          if (msg['turn_limit'] != null) {
+             _turnLimit = Duration(milliseconds: ((msg['turn_limit'] as num).toDouble() * 1000).toInt());
+             _currentTurnTimeRemaining = _turnLimit;
+          } else {
+             _turnLimit = const Duration(seconds: 30); // Default
+             _currentTurnTimeRemaining = _turnLimit;
+          }
+          _startTimer();
+      } else {
+          // Fallback if server doesn't send time
+          const duration = Duration(minutes: 5);
+           _timeRemainingX = duration;
+           _timeRemainingO = duration;
+           _turnLimit = const Duration(seconds: 30);
+           _currentTurnTimeRemaining = _turnLimit;
+           _startTimer();
+      }
+
+
+
       emit(_buildInProgressState());
     } else if (msg['type'] == 'SPECTATOR_JOINED') {
+
       _myPlayer = null; // Spectator
       _engine = GameEngine(rule: GameRule.standard);
       
@@ -317,7 +406,21 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       emit(_buildInProgressState(isSpectating: true));
     } else if (msg['type'] == 'MOVE_MADE') {
       final pos = Position(x: msg['x'], y: msg['y']);
+
+       if (msg['time_x'] != null) {
+           _timeRemainingX = Duration(milliseconds: ((msg['time_x'] as num).toDouble() * 1000).toInt());
+       }
+       if (msg['time_o'] != null) {
+           _timeRemainingO = Duration(milliseconds: ((msg['time_o'] as num).toDouble() * 1000).toInt());
+       }
+       
+       if (_turnLimit != null) {
+           _currentTurnTimeRemaining = _turnLimit;
+       }
+
+
       // Should we check currentPlayer? 
+
       // If we are spectator, myPlayer is null, so currentPlayer != myPlayer is always true (unless null == null, but currentPlayer is enum/object)
       // Actually currentPlayer is Player.x or Player.o. myPlayer is stored as Player?. 
       // If myPlayer is null, we always update.
@@ -389,7 +492,9 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       }
     }
     else if (msg['type'] == 'GAME_OVER') {
+      _timer?.cancel();
       final winnerStr = msg['winner'];
+
       Player? winner;
       if (winnerStr == 'X') winner = Player.x;
       else if (winnerStr == 'O') winner = Player.o;
@@ -575,11 +680,14 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     
     _engine = null;
     _repository.clearGame();
+
     _socketService.disconnect();
     _messages.clear();
     _currentRoomCode = null;
+    _timer?.cancel();
     emit(GameInitial());
   }
+
   
   void _onUndoMove(UndoMove event, Emitter<GameState> emit) {
     if (_engine == null || _mode == GameMode.online) return;
@@ -661,6 +769,45 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       canRedo: _mode != GameMode.online && _engine!.canRedo,
       isSpectating: isSpectating,
       isAIThinking: isAIThinking,
+      timeRemainingX: _timeRemainingX,
+      timeRemainingO: _timeRemainingO,
+      turnLimit: _turnLimit,
+      currentTurnTimeRemaining: _currentTurnTimeRemaining,
     );
+
+  }
+
+  void _onTimerTicked(TimerTicked event, Emitter<GameState> emit) {
+      if (state is GameOver) {
+          _timer?.cancel();
+          return;
+      }
+      if (_engine == null || _engine!.isGameOver) return;
+      
+      if (_engine!.currentPlayer == Player.x) {
+          if (_timeRemainingX != null) {
+              _timeRemainingX = _timeRemainingX! - const Duration(seconds: 1);
+              if (_timeRemainingX!.isNegative) _timeRemainingX = Duration.zero;
+          }
+      } else {
+           if (_timeRemainingO != null) {
+              _timeRemainingO = _timeRemainingO! - const Duration(seconds: 1);
+              if (_timeRemainingO!.isNegative) _timeRemainingO = Duration.zero;
+          }
+      }
+      
+      if (_currentTurnTimeRemaining != null) {
+          _currentTurnTimeRemaining = _currentTurnTimeRemaining! - const Duration(seconds: 1);
+          if (_currentTurnTimeRemaining!.isNegative) _currentTurnTimeRemaining = Duration.zero;
+      }
+
+      emit(_buildInProgressState());
+  }
+
+  void _startTimer() {
+      _timer?.cancel();
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+          add(TimerTicked());
+      });
   }
 }
