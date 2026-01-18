@@ -22,7 +22,7 @@ class ShopService {
     }
   }
 
-  Future<bool> buyItem(String userId, String itemId) async {
+  Future<int?> buyItem(String userId, String itemId) async {
     final url = Uri.parse('${AppConfig.authUrl}/shop/buy');
     try {
       final response = await _client.post(
@@ -30,10 +30,36 @@ class ShopService {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'user_id': userId, 'item_id': itemId}),
       );
-      return response.statusCode == 200;
+      if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          if (data['status'] == 'success') {
+              return data['new_balance'] as int?; 
+          }
+      }
+      return null;
     } catch (e) {
-      return false;
+      return null;
     }
+  }
+
+  Future<int> getUserCoins(String userId) async {
+      // For now, we reuse GetUser from leaderboard or history handler? 
+      // Server doesn't have dedicated GetUserCoins, but GetUser returns the profile with Coins.
+      // We can use the existing /users/{id} endpoint if it exposes coins.
+      // Checking backend main.go... yes, "/users/" handled by leaderboardHandler.GetUser
+      // checking repository.go User struct... yes, Coins int `json:"coins"`.
+      
+      final url = Uri.parse('${AppConfig.authUrl}/users/$userId');
+      try {
+          final response = await _client.get(url);
+          if (response.statusCode == 200) {
+              final data = jsonDecode(response.body);
+              return data['coins'] as int? ?? 0;
+          }
+          return 0;
+      } catch (e) {
+          return 0;
+      }
   }
   
   Future<List<String>> getInventory(String userId) async {

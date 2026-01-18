@@ -26,12 +26,14 @@ class Inventory extends Equatable {
   final List<String> ownedItemIds;
   final String equippedPieceSkinId;
   final String equippedBoardSkinId;
+  final String equippedAvatarFrameId;
 
   const Inventory({
     this.coins = 0,
-    this.ownedItemIds = const ['default_piece', 'default_board'],
+    this.ownedItemIds = const ['default_piece', 'default_board', 'default_avatar'],
     this.equippedPieceSkinId = 'default_piece',
     this.equippedBoardSkinId = 'default_board',
+    this.equippedAvatarFrameId = 'default_avatar',
   });
 
   Inventory addCoins(int amount) {
@@ -51,8 +53,10 @@ class Inventory extends Equatable {
     if (!ownedItemIds.contains(itemId)) return this;
     if (type == SkinType.piece) {
       return copyWith(equippedPieceSkinId: itemId);
-    } else {
+    } else if (type == SkinType.board) {
       return copyWith(equippedBoardSkinId: itemId);
+    } else {
+      return copyWith(equippedAvatarFrameId: itemId);
     }
   }
 
@@ -61,15 +65,17 @@ class Inventory extends Equatable {
     List<String>? ownedItemIds,
     String? equippedPieceSkinId,
     String? equippedBoardSkinId,
+    String? equippedAvatarFrameId,
   }) {
     return Inventory(
       coins: coins ?? this.coins,
       ownedItemIds: ownedItemIds ?? this.ownedItemIds,
       equippedPieceSkinId: equippedPieceSkinId ?? this.equippedPieceSkinId,
       equippedBoardSkinId: equippedBoardSkinId ?? this.equippedBoardSkinId,
+      equippedAvatarFrameId: equippedAvatarFrameId ?? this.equippedAvatarFrameId,
     );
   }
 
   @override
-  List<Object?> get props => [coins, ownedItemIds, equippedPieceSkinId, equippedBoardSkinId];
+  List<Object?> get props => [coins, ownedItemIds, equippedPieceSkinId, equippedBoardSkinId, equippedAvatarFrameId];
 }

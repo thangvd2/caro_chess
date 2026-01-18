@@ -32,26 +32,47 @@ class PlayerTimerWidget extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: isActive ? (isLowTime ? Colors.red.withOpacity(0.2) : Colors.green.withOpacity(0.2)) : Colors.grey.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
+        color: isActive 
+            ? (isLowTime ? Colors.red.withOpacity(0.2) : Colors.green.withOpacity(0.2)) 
+            : Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(30),
         border: Border.all(
-          color: isActive ? (isLowTime ? Colors.red : Colors.green) : Colors.transparent,
-          width: 2,
+          color: isActive ? (isLowTime ? Colors.redAccent : Colors.greenAccent) : Colors.white10,
+          width: 1.5,
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.timer, size: 16, color: isActive ? (isLowTime ? Colors.red : Colors.green) : Colors.grey),
-          const SizedBox(width: 4),
-          Text(
-            "$label $timeText",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: isActive ? (isLowTime ? Colors.red : Colors.green) : Colors.grey,
-              fontSize: 14,
+          Icon(Icons.timer, size: 20, color: isActive ? (isLowTime ? Colors.redAccent : Colors.greenAccent) : Colors.white38),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: isActive ? (isLowTime ? Colors.redAccent : Colors.greenAccent) : Colors.white70,
+                    fontSize: 12,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  timeText,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: isActive ? (isLowTime ? Colors.redAccent : Colors.greenAccent) : Colors.white,
+                    fontSize: 14,
+                    fontFamily: "Monospace", 
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                )
+              ],
             ),
           ),
         ],

@@ -118,31 +118,53 @@ class SendChatMessage extends GameEvent {
 
 class TimerTicked extends GameEvent {}
 
-// States
-abstract class GameState extends Equatable {
-  const GameState();
+class SyncShopState extends GameEvent {
+  final int? coins;
+  final String? unlockedItemId;
+  final bool purchasedDefaults;
+
+  const SyncShopState({this.coins, this.unlockedItemId, this.purchasedDefaults = false});
+
   @override
-  List<Object?> get props => [];
+  List<Object?> get props => [coins, unlockedItemId, purchasedDefaults];
 }
 
-class GameInitial extends GameState {}
+// States
+abstract class GameState extends Equatable {
+  final UserProfile? userProfile;
+  final Inventory? inventory;
+  
+  const GameState({this.userProfile, this.inventory});
+  
+  @override
+  List<Object?> get props => [userProfile, inventory];
+}
+
+class GameInitial extends GameState {
+  const GameInitial({super.userProfile, super.inventory});
+}
+
 class GameAuthLoading extends GameState {
   @override
   List<Object?> get props => [];
 }
+
 class GameAuthRequired extends GameState {}
+
 class GameFindingMatch extends GameState {
   final bool isCreatingRoom;
-  const GameFindingMatch({this.isCreatingRoom = false});
+  const GameFindingMatch({this.isCreatingRoom = false, super.userProfile, super.inventory});
+  
   @override
-  List<Object?> get props => [isCreatingRoom];
+  List<Object?> get props => [isCreatingRoom, userProfile, inventory];
 }
 
 class GameWaitingInRoom extends GameState {
   final String code;
-  const GameWaitingInRoom(this.code);
+  const GameWaitingInRoom(this.code, {super.userProfile, super.inventory});
+  
   @override
-  List<Object?> get props => [code];
+  List<Object?> get props => [code, userProfile, inventory];
 }
 
 class GameInProgress extends GameState {
@@ -152,8 +174,8 @@ class GameInProgress extends GameState {
   final GameMode mode;
   final AIDifficulty difficulty;
   final Player? myPlayer;
-  final UserProfile? userProfile;
-  final Inventory inventory;
+  // UserProfile? userProfile; 
+  // Inventory inventory; // Removed
   final List<ChatMessage> messages;
   final bool canUndo;
   final bool canRedo;
@@ -168,10 +190,10 @@ class GameInProgress extends GameState {
     required this.rule,
     required this.mode,
     required this.difficulty,
-    required this.inventory,
+    required Inventory inventory, // Keep as required arg for clarity
     required this.messages,
     this.myPlayer,
-    this.userProfile,
+    UserProfile? userProfile, 
     this.canUndo = false,
     this.canRedo = false,
     this.isSpectating = false,
@@ -180,7 +202,10 @@ class GameInProgress extends GameState {
     this.timeRemainingO,
     this.turnLimit,
     this.currentTurnTimeRemaining,
-  });
+  }) : super(userProfile: userProfile, inventory: inventory);
+
+  // Getter to access inventory easily if needed, but super has it
+  Inventory get inventory => super.inventory!;
 
   final Duration? turnLimit;
   final Duration? currentTurnTimeRemaining;
@@ -197,9 +222,9 @@ class GameOver extends GameState {
   final GameRule rule;
   final GameMode mode;
   final AIDifficulty difficulty;
-  final Inventory inventory;
+  // Inventory inventory;
   final List<Position>? winningLine;
-  final UserProfile? userProfile;
+  // UserProfile? userProfile; 
   final Player? myPlayer;
   final String? winReason;
 
@@ -209,12 +234,14 @@ class GameOver extends GameState {
     required this.rule, 
     required this.mode,
     required this.difficulty,
-    required this.inventory, 
+    required Inventory inventory, 
     this.winningLine, 
-    this.userProfile,
+    UserProfile? userProfile,
     this.myPlayer,
     this.winReason,
-  });
+  }) : super(userProfile: userProfile, inventory: inventory);
+  
+  Inventory get inventory => super.inventory!;
 
   @override
   List<Object?> get props => [board, winner, rule, mode, difficulty, inventory, winningLine, userProfile, myPlayer, winReason];
@@ -250,7 +277,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         _aiService = aiService ?? AIService(),
         _socketService = socketService ?? WebSocketService(),
         _audioService = audioService ?? AudioService(),
-        super(GameInitial()) {
+        super(GameInitial(inventory: const Inventory())) {
     on<StartGame>(_onStartGame);
     on<StartRoomCreation>(_onStartRoomCreation);
     on<JoinRoomRequested>(_onJoinRoomRequested);
@@ -269,6 +296,41 @@ class GameBloc extends Bloc<GameEvent, GameState> {
 
     on<SendChatMessage>(_onSendChatMessage);
     on<TimerTicked>(_onTimerTicked);
+    on<SyncShopState>(_onSyncShopState);
+  }
+
+  void _onSyncShopState(SyncShopState event, Emitter<GameState> emit) {
+      if (event.coins != null) {
+          _inventory = _inventory.copyWith(coins: event.coins);
+      }
+      if (event.unlockedItemId != null) {
+          _inventory = _inventory.addItem(event.unlockedItemId!);
+      }
+      if (event.purchasedDefaults) {
+           // Reload inventory fully if needed, but for now just single item sync
+      }
+      _repository.saveInventory(_inventory);
+      
+      if (state is GameOver) {
+          final s = state as GameOver;
+          emit(GameOver(
+             board: s.board,
+             winner: s.winner,
+             rule: s.rule,
+             mode: s.mode,
+             difficulty: s.difficulty,
+             inventory: _inventory,
+             winningLine: s.winningLine,
+             userProfile: _userProfile ?? s.userProfile,
+             myPlayer: s.myPlayer,
+             winReason: s.winReason,
+          ));
+      } else if (state is GameInProgress) {
+          bool isSpec = (state as GameInProgress).isSpectating;
+          emit(_buildInProgressState(isSpectating: isSpec));
+      } else if (state is GameInitial) {
+          emit(GameInitial(userProfile: _userProfile, inventory: _inventory));
+      }
   }
 
 
@@ -293,7 +355,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
 
 
     if (_mode == GameMode.online) {
-    emit(const GameFindingMatch());
+    emit(GameFindingMatch(userProfile: _userProfile, inventory: _inventory));
       final token = await _repository.ensureAuthenticated();
       _socketService.connect(token: token);
       _socketSubscription?.cancel();
@@ -319,7 +381,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   Future<void> _onStartRoomCreation(StartRoomCreation event, Emitter<GameState> emit) async {
     _mode = GameMode.online;
     _messages.clear();
-    emit(const GameFindingMatch(isCreatingRoom: true));
+    emit(GameFindingMatch(isCreatingRoom: true, userProfile: _userProfile, inventory: _inventory));
     final token = await _repository.ensureAuthenticated();
     _socketService.connect(token: token);
     _socketSubscription?.cancel();
@@ -343,7 +405,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     _mode = GameMode.online;
     _currentRoomCode = event.code;
     _messages.clear();
-    emit(const GameFindingMatch());
+    emit(GameFindingMatch(userProfile: _userProfile, inventory: _inventory));
     final token = await _repository.ensureAuthenticated();
     _socketService.connect(token: token);
     _socketSubscription?.cancel();
@@ -362,7 +424,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
 
     if (msg['type'] == 'ROOM_CREATED') {
       _currentRoomCode = msg['code'];
-      emit(GameWaitingInRoom(msg['code']));
+      emit(GameWaitingInRoom(msg['code'], userProfile: _userProfile, inventory: _inventory));
     } else if (msg['type'] == 'MATCH_FOUND') {
        _audioService.playGameStart();
 
@@ -457,6 +519,13 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       }
     } else if (msg['type'] == 'UPDATE_RANK') {
       _userProfile = UserProfile(id: _userProfile?.id ?? "Player", elo: msg['elo']);
+            
+      if (msg['coins'] != null) {
+          int newCoins = (msg['coins'] as num).toInt();
+          _inventory = _inventory.copyWith(coins: newCoins);
+          _repository.saveInventory(_inventory);
+      }
+
       if (state is GameOver) {
           final s = state as GameOver;
           emit(GameOver(
@@ -465,7 +534,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
              rule: s.rule,
              mode: s.mode,
              difficulty: s.difficulty,
-             inventory: s.inventory,
+             inventory: _inventory, // Use updated inventory
              winningLine: s.winningLine,
              userProfile: _userProfile,
              myPlayer: s.myPlayer,
@@ -516,19 +585,26 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       
       String? reason = msg['reason'];
 
+      // VICTORY GUARD: If we already have a win condition, ignore redundant "opponent_left" messages
+      if (state is GameOver) {
+          final s = state as GameOver;
+          if (s.winReason != null && reason == "opponent_left") {
+              // Ignore this update, we already won/lost by a primary reason (e.g. timeout or checkmate)
+              return;
+          }
+      }
+
       // Play sound based on server winner result
       if (winner != null) {
           final isWin = winner == (_myPlayer ?? Player.x);
-          print("GameBloc: GAME_OVER received. Winner: $winnerStr, Me: $_myPlayer, isWin: $isWin");
-          if (isWin) {
-            print("GameBloc: Playing Win Sound");
-            _audioService.playWin();
-          } else {
-             print("GameBloc: Playing Lose Sound");
-             _audioService.playLose();
+          // Only play sound if we haven't played it yet (check state)
+          if (state is! GameOver) { 
+              if (isWin) {
+                _audioService.playWin();
+              } else {
+                 _audioService.playLose();
+              }
           }
-      } else {
-          // Draw or other
       }
       
       // Ensure we explicitly emit GameOver even if local engine didn't catch it logic-wise (e.g. timeout)
@@ -554,12 +630,14 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     emit(GameAuthLoading());
     try {
       final token = await _repository.ensureAuthenticated();
-      if (token == null) {
-        emit(GameAuthRequired());
-        return;
+      final savedGame = await _repository.loadGame(); // Define savedGame here
+      if (savedGame != null) {
+          add(LoadSavedGame()); // Call without argument, as LoadSavedGame event doesn't take one
+      } else {
+          emit(GameInitial(userProfile: _userProfile, inventory: _inventory));
       }
-      add(LoadSavedGame());
     } catch (e) {
+      print("Error in startup auth: $e");
       emit(GameAuthRequired());
     }
   }
@@ -612,7 +690,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       emit(_buildInProgressState());
     } else {
       print("GameBloc: No saved game. Emitting GameInitial (Home Screen).");
-      emit(GameInitial());
+      emit(GameInitial(userProfile: _userProfile, inventory: _inventory));
     }
   }
 
@@ -623,15 +701,24 @@ class GameBloc extends Bloc<GameEvent, GameState> {
 
     final success = _engine!.placePiece(event.position);
     if (success) {
-      _audioService.playMove();
+      try {
+        _audioService.playMove(); // Audio might fail on some platforms/configs
+      } catch (e) {
+        // Ignore audio errors to prevent game crash
+      }
+      
       if (_mode == GameMode.online) {
         _socketService.send({'type': 'MOVE', 'x': event.position.x, 'y': event.position.y});
       }
 
       _saveState();
       if (_engine!.isGameOver) {
-        _playWinLoseSound();
-        _awardCoins();
+        try {
+            _playWinLoseSound();
+            _awardCoins();
+        } catch (e) {
+            // Ignore
+        }
       }
       emit(_buildInProgressState());
       
@@ -645,23 +732,69 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     emit(_buildInProgressState(isAIThinking: true));
     // Artificial delay to make AI feel more natural
     await Future.delayed(const Duration(milliseconds: 1000));
-    final move = await _aiService.getBestMove(_engine!.board, Player.o, difficulty: _difficulty, rule: _engine!.rule);
-    add(PlacePiece(move));
+    try {
+        final move = await _aiService.getBestMove(_engine!.board, Player.o, difficulty: _difficulty, rule: _engine!.rule);
+        add(PlacePiece(move));
+    } catch (e) {
+        print("GameBloc: AI Error: $e"); // Keep AI error log as it's critical
+        // Optionally emit an error state or toast, but for now just log
+    }
   }
 
   void _onPurchaseItemRequested(PurchaseItemRequested event, Emitter<GameState> emit) {
     if (_inventory.coins >= event.item.price && !_inventory.ownedItemIds.contains(event.item.id)) {
       _inventory = _inventory.removeCoins(event.item.price).addItem(event.item.id);
       _repository.saveInventory(_inventory);
-      emit(_buildInProgressState());
+      
+      if (state is GameOver) {
+          final s = state as GameOver;
+          emit(GameOver(
+             board: s.board,
+             winner: s.winner,
+             rule: s.rule,
+             mode: s.mode,
+             difficulty: s.difficulty,
+             inventory: _inventory,
+             winningLine: s.winningLine,
+             userProfile: _userProfile ?? s.userProfile,
+             myPlayer: s.myPlayer,
+             winReason: s.winReason,
+          ));
+      } else {
+        bool isSpec = false;
+        if (state is GameInProgress) isSpec = (state as GameInProgress).isSpectating;
+        emit(_buildInProgressState(isSpectating: isSpec));
+      }
     }
   }
 
   void _onEquipItemRequested(EquipItemRequested event, Emitter<GameState> emit) {
     if (_inventory.ownedItemIds.contains(event.itemId)) {
       _inventory = _inventory.equipItem(event.itemId, event.type);
+      
+      // Optimistic update: Emit new state first
+      if (state is GameOver) {
+          final s = state as GameOver;
+          emit(GameOver(
+             board: s.board,
+             winner: s.winner,
+             rule: s.rule,
+             mode: s.mode,
+             difficulty: s.difficulty,
+             inventory: _inventory,
+             winningLine: s.winningLine,
+             userProfile: _userProfile ?? s.userProfile,
+             myPlayer: s.myPlayer,
+             winReason: s.winReason,
+          ));
+      } else {
+         bool isSpec = false;
+         if (state is GameInProgress) isSpec = (state as GameInProgress).isSpectating;
+         emit(_buildInProgressState(isSpectating: isSpec));
+      }
+
+      // Then save to persistence
       _repository.saveInventory(_inventory);
-      emit(_buildInProgressState());
     }
   }
 
@@ -669,7 +802,26 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     if (!_inventory.ownedItemIds.contains(event.itemId)) {
       _inventory = _inventory.addItem(event.itemId);
       _repository.saveInventory(_inventory);
-      emit(_buildInProgressState());
+
+      if (state is GameOver) {
+          final s = state as GameOver;
+          emit(GameOver(
+             board: s.board,
+             winner: s.winner,
+             rule: s.rule,
+             mode: s.mode,
+             difficulty: s.difficulty,
+             inventory: _inventory,
+             winningLine: s.winningLine,
+             userProfile: _userProfile ?? s.userProfile,
+             myPlayer: s.myPlayer,
+             winReason: s.winReason,
+          ));
+      } else {
+         bool isSpec = false;
+         if (state is GameInProgress) isSpec = (state as GameInProgress).isSpectating;
+         emit(_buildInProgressState(isSpectating: isSpec));
+      }
     }
   }
 
@@ -697,7 +849,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     _messages.clear();
     _currentRoomCode = null;
     _timer?.cancel();
-    emit(GameInitial());
+    emit(GameInitial(userProfile: _userProfile, inventory: _inventory));
   }
 
   
@@ -752,7 +904,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   }
 
   GameState _buildInProgressState({bool isSpectating = false, bool isAIThinking = false}) {
-    if (_engine == null) return GameInitial();
+    if (_engine == null) return GameInitial(userProfile: _userProfile, inventory: _inventory);
     if (_engine!.isGameOver) {
        return GameOver(
           board: _engine!.board,

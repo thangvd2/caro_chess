@@ -24,13 +24,15 @@ var upgrader = websocket.Upgrader{
 }
 
 type Client struct {
-	ID      string
-	hub     *Hub
-	mm      *Matchmaker
-	rm      *RoomManager
-	conn    *websocket.Conn
-	send    chan []byte
-	Session *GameSession
+	ID            string
+	hub           *Hub
+	mm            *Matchmaker
+	rm            *RoomManager
+	conn          *websocket.Conn
+	recv          chan []byte
+	send          chan []byte
+	Session       *GameSession
+	PreferredRule engine.GameRule // Track preferred rule for matchmaking
 }
 
 func (c *Client) readPump() {
@@ -192,6 +194,12 @@ func (c *Client) readPump() {
 			} else if msg["type"] == "WIN_CLAIM" {
 				c.mm.endGame(c.Session, c)
 			} else if msg["type"] == "FIND_MATCH" {
+				// Parse Rule
+				rule := engine.RuleStandard
+				if r, ok := msg["rule"].(string); ok && r != "" {
+					rule = engine.GameRule(r)
+				}
+				c.PreferredRule = rule
 				c.mm.addClient <- c
 			} else if msg["type"] == "CREATE_ROOM" {
 				// Default defaults

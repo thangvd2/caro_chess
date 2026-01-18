@@ -61,6 +61,7 @@ class GameRepository {
       'ownedItemIds': inventory.ownedItemIds,
       'equippedPieceSkinId': inventory.equippedPieceSkinId,
       'equippedBoardSkinId': inventory.equippedBoardSkinId,
+      'equippedAvatarFrameId': inventory.equippedAvatarFrameId,
     };
     await prefs.setString(_inventoryKey, jsonEncode(json));
   }
@@ -76,6 +77,7 @@ class GameRepository {
       ownedItemIds: List<String>.from(json['ownedItemIds']),
       equippedPieceSkinId: json['equippedPieceSkinId'],
       equippedBoardSkinId: json['equippedBoardSkinId'],
+      equippedAvatarFrameId: json['equippedAvatarFrameId'] ?? 'default_avatar',
     );
   }
 
