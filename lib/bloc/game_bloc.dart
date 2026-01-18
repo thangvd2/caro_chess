@@ -10,6 +10,7 @@ import '../engine/game_engine.dart';
 import '../repositories/game_repository.dart';
 import '../ai/ai_service.dart';
 import '../services/web_socket_service.dart';
+import '../services/ad_service.dart';
 import '../services/audio_service.dart';
 
 // Events
@@ -129,6 +130,17 @@ class SyncShopState extends GameEvent {
   List<Object?> get props => [coins, unlockedItemId, purchasedDefaults];
 }
 
+class CoinsPurchased extends GameEvent {
+  final int amount;
+  const CoinsPurchased(this.amount);
+  @override
+  List<Object?> get props => [amount];
+}
+
+class PurchaseRestored extends GameEvent {}
+
+class AdWatched extends GameEvent {}
+
 // States
 abstract class GameState extends Equatable {
   final UserProfile? userProfile;
@@ -227,6 +239,7 @@ class GameOver extends GameState {
   // UserProfile? userProfile; 
   final Player? myPlayer;
   final String? winReason;
+  final bool showAd;
 
   const GameOver({
     required this.board, 
@@ -239,12 +252,13 @@ class GameOver extends GameState {
     UserProfile? userProfile,
     this.myPlayer,
     this.winReason,
+    this.showAd = false,
   }) : super(userProfile: userProfile, inventory: inventory);
   
   Inventory get inventory => super.inventory!;
 
   @override
-  List<Object?> get props => [board, winner, rule, mode, difficulty, inventory, winningLine, userProfile, myPlayer, winReason];
+  List<Object?> get props => [board, winner, rule, mode, difficulty, inventory, winningLine, userProfile, myPlayer, winReason, showAd];
 }
 
 // Bloc
@@ -269,6 +283,11 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   Duration? _timeRemainingO;
   Duration? _turnLimit;
   Duration? _currentTurnTimeRemaining;
+
+  int _gamesPlayedSinceLastAd = 0;
+  bool _isAdPending = false;
+  static const int _adFrequency = 3;
+  bool _isPremium = false;
 
 
 
@@ -296,7 +315,61 @@ class GameBloc extends Bloc<GameEvent, GameState> {
 
     on<SendChatMessage>(_onSendChatMessage);
     on<TimerTicked>(_onTimerTicked);
+    on<EarnCoins>(_onEarnCoins);
     on<SyncShopState>(_onSyncShopState);
+    on<AdWatched>(_onAdWatched);
+    on<CoinsPurchased>(_onCoinsPurchased);
+    on<PurchaseRestored>(_onPurchaseRestored);
+  }
+
+  Future<void> _onCoinsPurchased(CoinsPurchased event, Emitter<GameState> emit) async {
+      final currentCoins = _inventory.coins;
+      final newCoins = currentCoins + event.amount;
+      _inventory = _inventory.copyWith(coins: newCoins);
+      await _repository.saveInventory(_inventory);
+      
+      // Update state
+      if (state is GameInitial) {
+         emit(GameInitial(userProfile: _userProfile, inventory: _inventory));
+      } else if (state is GameOver) {
+         final s = state as GameOver;
+         emit(GameOver(
+           board: s.board, winner: s.winner, rule: s.rule, mode: s.mode, difficulty: s.difficulty,
+           inventory: _inventory, winningLine: s.winningLine,
+           userProfile: s.userProfile, myPlayer: s.myPlayer, winReason: s.winReason, showAd: s.showAd
+         ));
+      } else if (state is GameInProgress) {
+         emit(_buildInProgressState(isSpectating: (state as GameInProgress).isSpectating));
+      }
+  }
+
+  Future<void> _onPurchaseRestored(PurchaseRestored event, Emitter<GameState> emit) async {
+       print("GameBloc: Purchase Restored (Premium Enabled)");
+       _isPremium = true;
+       await _repository.savePremiumStatus(true);
+       AdService().isPremium = true;
+       
+       // Clear any pending ad state immediately
+       _isAdPending = false;
+       _gamesPlayedSinceLastAd = 0;
+       await _repository.saveAdState(gamesPlayed: 0, isPending: false);
+       
+       // Update State to reflect premium (e.g. remove ad from GameOver if showing)
+       if (state is GameOver) {
+           final s = state as GameOver;
+           emit(GameOver(
+               board: s.board, winner: s.winner, rule: s.rule, mode: s.mode, difficulty: s.difficulty,
+               inventory: s.inventory, winningLine: s.winningLine,
+               userProfile: s.userProfile, myPlayer: s.myPlayer, winReason: s.winReason, 
+               showAd: false // Hide ad if present
+           ));
+       }
+  }
+
+  Future<void> _onAdWatched(AdWatched event, Emitter<GameState> emit) async {
+      _gamesPlayedSinceLastAd = 0;
+      _isAdPending = false;
+      await _repository.saveAdState(gamesPlayed: 0, isPending: false);
   }
 
   void _onSyncShopState(SyncShopState event, Emitter<GameState> emit) {
@@ -609,6 +682,16 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       
       // Ensure we explicitly emit GameOver even if local engine didn't catch it logic-wise (e.g. timeout)
       if (_engine != null) {
+        _gamesPlayedSinceLastAd++;
+        bool shouldShowAd = false;
+        if (!_isPremium && _gamesPlayedSinceLastAd >= _adFrequency) {
+            shouldShowAd = true;
+            _gamesPlayedSinceLastAd = 0;
+            _isAdPending = true;
+        }
+        
+        _repository.saveAdState(gamesPlayed: _gamesPlayedSinceLastAd, isPending: _isAdPending);
+
         emit(GameOver(
           board: _engine!.board,
         winner: winner,
@@ -620,6 +703,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         userProfile: _userProfile,
         myPlayer: _myPlayer,
         winReason: reason,
+        showAd: shouldShowAd,
       ));
       }
     }
@@ -668,6 +752,20 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     }
     
     _inventory = await _repository.loadInventory();
+    final adState = await _repository.loadAdState();
+    _gamesPlayedSinceLastAd = adState['gamesPlayed'];
+    _isAdPending = adState['isPending'];
+    _isPremium = await _repository.loadPremiumStatus();
+    
+    // Sync AdService
+    AdService().isPremium = _isPremium;
+    
+    if (_isPremium) {
+        _isAdPending = false; // Clear pending if user bought premium
+        _gamesPlayedSinceLastAd = 0;
+        await _repository.saveAdState(gamesPlayed: 0, isPending: false);
+    }
+
     final savedData = await _repository.loadGame();
     
     final userId = await _repository.getUserId(); 
@@ -687,7 +785,23 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         _engine!.placePiece(pos);
       }
       
-      emit(_buildInProgressState());
+      if (_engine!.isGameOver) {
+          // Restore Game Over state
+          emit(GameOver(
+            board: _engine!.board,
+            winner: _engine!.winner,
+            rule: _engine!.rule,
+            mode: _mode,
+            difficulty: _difficulty,
+            inventory: _inventory,
+            winningLine: _engine!.winningLine,
+            userProfile: _userProfile,
+            myPlayer: null, // Local game usually
+            showAd: _isAdPending, // Resume pending ad if it was pending
+          ));
+      } else {
+          emit(_buildInProgressState());
+      }
     } else {
       print("GameBloc: No saved game. Emitting GameInitial (Home Screen).");
       emit(GameInitial(userProfile: _userProfile, inventory: _inventory));
@@ -712,6 +826,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       }
 
       _saveState();
+      
       if (_engine!.isGameOver) {
         try {
             _playWinLoseSound();
@@ -719,8 +834,43 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         } catch (e) {
             // Ignore
         }
+        
+        _gamesPlayedSinceLastAd++;
+        bool shouldShowAd = false;
+        if (_gamesPlayedSinceLastAd >= _adFrequency) {
+            shouldShowAd = true;
+            _gamesPlayedSinceLastAd = 0; // Reset local counter immediately or keep it?
+            // Actually, keep it logic: 
+            // If we reset here, and save 0, then if app crashes, we load 0.
+            // But we also save isPending=true. So loadGame restores isPending=true.
+            // On AdWatched -> isPending=false.
+            
+            // Wait, if we set pending=true, we should probably keep pending until watched.
+            // Resetting counter to 0 here is fine IF we rely on pending flag.
+            _gamesPlayedSinceLastAd = 0; 
+            _isAdPending = true;
+        }
+
+        // Save State (Ad + Counter)
+        // We save even if not pending, to track 1/3, 2/3 progress.
+        _repository.saveAdState(gamesPlayed: _gamesPlayedSinceLastAd, isPending: _isAdPending);
+
+        emit(GameOver(
+           board: _engine!.board,
+           winner: _engine!.winner,
+           rule: _engine!.rule,
+           mode: _mode,
+           difficulty: _difficulty,
+           inventory: _inventory,
+           winningLine: _engine!.winningLine,
+           userProfile: _userProfile,
+           myPlayer: _myPlayer,
+           // winReason: null, 
+           showAd: shouldShowAd,
+        ));
+      } else {
+         emit(_buildInProgressState());
       }
-      emit(_buildInProgressState());
       
       if (!_engine!.isGameOver && _mode == GameMode.vsAI && _engine!.currentPlayer == Player.o) {
         add(AIMoveRequested());
@@ -941,6 +1091,32 @@ class GameBloc extends Bloc<GameEvent, GameState> {
 
   }
 
+  void _onEarnCoins(EarnCoins event, Emitter<GameState> emit) {
+      _inventory = _inventory.addCoins(event.amount);
+      _repository.saveInventory(_inventory);
+      
+      bool isSpec = false;
+      if (state is GameInProgress) isSpec = (state as GameInProgress).isSpectating;
+      
+      if (state is GameOver) {
+          final s = state as GameOver;
+          emit(GameOver(
+             board: s.board,
+             winner: s.winner,
+             rule: s.rule,
+             mode: s.mode,
+             difficulty: s.difficulty,
+             inventory: _inventory,
+             winningLine: s.winningLine,
+             userProfile: _userProfile ?? s.userProfile,
+             myPlayer: s.myPlayer,
+             winReason: s.winReason,
+          ));
+      } else {
+        emit(_buildInProgressState(isSpectating: isSpec));
+      }
+  }
+
   void _onTimerTicked(TimerTicked event, Emitter<GameState> emit) {
       if (state is GameOver) {
           _timer?.cancel();
@@ -990,4 +1166,11 @@ class GameBloc extends Bloc<GameEvent, GameState> {
           add(TimerTicked());
       });
   }
+}
+
+class EarnCoins extends GameEvent {
+  final int amount;
+  const EarnCoins(this.amount);
+  @override
+  List<Object?> get props => [amount];
 }

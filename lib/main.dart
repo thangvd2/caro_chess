@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'dart:async';
 import 'bloc/game_bloc.dart';
 import 'ui/game_board_widget.dart';
 import 'ui/game_controls_widget.dart';
@@ -19,7 +20,14 @@ import 'ui/login_screen.dart';
 import 'ui/home_screen.dart';
 import 'ui/transitions/custom_page_transition.dart';
 
+import 'services/ad_service.dart';
+
+import 'package:flutter/foundation.dart'; // For kIsWeb
+
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  // AdService internally handles web checks, so we can call safely
+  AdService().initialize();
   runApp(const CaroChessApp());
 }
 
@@ -107,12 +115,69 @@ class AppContent extends StatelessWidget {
   }
 }
 
-class GamePage extends StatelessWidget {
+class GamePage extends StatefulWidget {
   const GamePage({super.key});
 
   @override
+  State<GamePage> createState() => _GamePageState();
+}
+
+class _GamePageState extends State<GamePage> {
+  
+  @override
+  void initState() {
+    super.initState();
+    // Check current state immediately upon mounting
+    // This ensures that if we restore directly into GameOver(showAd: true), the ad triggers.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+       _checkAndShowAd(context.read<GameBloc>().state);
+    });
+  }
+
+  void _checkAndShowAd(GameState state) {
+    if (state is GameOver && state.showAd) {
+        print("GamePage: Triggering Interstitial Ad (State Check)");
+        
+        final adService = AdService();
+        if (adService.isInterstitialAdReady) {
+           adService.showInterstitialAd(
+             onAdDismissed: () {
+               if (mounted) {
+                 context.read<GameBloc>().add(AdWatched());
+               }
+             }
+           );
+        } else {
+           print("GamePage: Ad not ready. Waiting for load...");
+           StreamSubscription? sub;
+           sub = adService.onInterstitialAdLoaded.listen((_) {
+               sub?.cancel();
+               // Re-verify state and mounting
+               if (!mounted) return;
+               
+               final currentState = context.read<GameBloc>().state;
+               if (currentState is GameOver && currentState.showAd) {
+                    print("GamePage: Ad loaded delayed. Showing Ad.");
+                    adService.showInterstitialAd(
+                     onAdDismissed: () {
+                       if (mounted) {
+                         context.read<GameBloc>().add(AdWatched());
+                       }
+                     }
+                   );
+               }
+           });
+        }
+     }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BlocListener<GameBloc, GameState>(
+      listener: (context, state) {
+         _checkAndShowAd(state);
+      },
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Caro Chess'),
         actions: [
@@ -259,6 +324,7 @@ class GamePage extends StatelessWidget {
             },
           ),
         ],
+      ),
       ),
     );
   }
