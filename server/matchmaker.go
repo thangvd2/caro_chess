@@ -9,6 +9,7 @@ import (
 
 	"caro_chess_server/db"
 	"caro_chess_server/elo"
+	"caro_chess_server/engine"
 )
 
 type Matchmaker struct {
@@ -28,28 +29,38 @@ func newMatchmaker(repo db.UserRepository) *Matchmaker {
 }
 
 func (m *Matchmaker) run() {
-	var pendingClient *Client
+	// Map of pending clients keyed by GameRule
+	pendingClients := make(map[engine.GameRule]*Client)
 
 	for {
 		select {
 		case client := <-m.addClient:
-			if pendingClient == nil {
-				pendingClient = client
-			} else {
-				m.startGame(pendingClient, client)
-				pendingClient = nil
+			rule := client.PreferredRule
+			if rule == "" {
+				rule = engine.RuleStandard
 			}
-		case client := <-m.removeClient: // Handle removal
-			if pendingClient == client {
-				pendingClient = nil
+
+			// Check if someone is waiting for this rule
+			if pending, ok := pendingClients[rule]; ok && pending != nil && pending != client {
+				delete(pendingClients, rule) // Remove pending
+				m.startGame(pending, client, rule)
+			} else {
+				pendingClients[rule] = client
+			}
+
+		case client := <-m.removeClient:
+			// If client disconnects while waiting, remove from queue
+			rule := client.PreferredRule
+			if pending, ok := pendingClients[rule]; ok && pending == client {
+				delete(pendingClients, rule)
 			}
 		}
 	}
 }
 
-func (m *Matchmaker) startGame(c1, c2 *Client) {
+func (m *Matchmaker) startGame(c1, c2 *Client, rule engine.GameRule) {
 	// Default Quick Match: 5 minutes + 5 seconds, 30s strict move limit
-	session := newGameSession(c1, c2, 5*time.Minute, 5*time.Second, 30*time.Second)
+	session := newGameSession(c1, c2, 5*time.Minute, 5*time.Second, 30*time.Second, rule)
 
 	// Register to set up callbacks
 	m.RegisterSession(session)
@@ -142,15 +153,22 @@ func (m *Matchmaker) endGame(session *GameSession, winner *Client) {
 	// Update Stats
 	u1.GamesPlayed++
 	u2.GamesPlayed++
+
 	if scoreX == 1.0 {
 		u1.Wins++
 		u2.Losses++
+		u1.Coins += 10000
+		u2.Coins += 5000
 	} else if scoreX == 0.0 {
 		u1.Losses++
 		u2.Wins++
+		u1.Coins += 5000
+		u2.Coins += 10000
 	} else {
 		u1.Draws++
 		u2.Draws++
+		u1.Coins += 5000
+		u2.Coins += 5000
 	}
 
 	m.repo.SaveUser(u1)
@@ -187,13 +205,21 @@ func (m *Matchmaker) endGame(session *GameSession, winner *Client) {
 	}
 	m.repo.SaveMatch(match)
 
-	// Notify clients of new Rank
+	// Notify clients of new Rank and Coins
 	if session.ClientX != nil {
-		msg, _ := json.Marshal(map[string]interface{}{"type": "UPDATE_RANK", "elo": u1.ELO})
+		msg, _ := json.Marshal(map[string]interface{}{
+			"type":  "UPDATE_RANK",
+			"elo":   u1.ELO,
+			"coins": u1.Coins,
+		})
 		session.ClientX.send <- msg
 	}
 	if session.ClientO != nil {
-		msg, _ := json.Marshal(map[string]interface{}{"type": "UPDATE_RANK", "elo": u2.ELO})
+		msg, _ := json.Marshal(map[string]interface{}{
+			"type":  "UPDATE_RANK",
+			"elo":   u2.ELO,
+			"coins": u2.Coins,
+		})
 		session.ClientO.send <- msg
 	}
 

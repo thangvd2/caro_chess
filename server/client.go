@@ -24,13 +24,15 @@ var upgrader = websocket.Upgrader{
 }
 
 type Client struct {
-	ID      string
-	hub     *Hub
-	mm      *Matchmaker
-	rm      *RoomManager
-	conn    *websocket.Conn
-	send    chan []byte
-	Session *GameSession
+	ID            string
+	hub           *Hub
+	mm            *Matchmaker
+	rm            *RoomManager
+	conn          *websocket.Conn
+	recv          chan []byte
+	send          chan []byte
+	Session       *GameSession
+	PreferredRule engine.GameRule // Track preferred rule for matchmaking
 }
 
 func (c *Client) readPump() {
@@ -192,12 +194,19 @@ func (c *Client) readPump() {
 			} else if msg["type"] == "WIN_CLAIM" {
 				c.mm.endGame(c.Session, c)
 			} else if msg["type"] == "FIND_MATCH" {
+				// Parse Rule
+				rule := engine.RuleStandard
+				if r, ok := msg["rule"].(string); ok && r != "" {
+					rule = engine.GameRule(r)
+				}
+				c.PreferredRule = rule
 				c.mm.addClient <- c
 			} else if msg["type"] == "CREATE_ROOM" {
 				// Default defaults
 				totalTime := 5 * time.Minute
 				increment := 5 * time.Second
 				turnLimit := 30 * time.Second
+				rule := engine.RuleStandard
 
 				if t, ok := msg["total_time"].(float64); ok {
 					totalTime = time.Duration(t) * time.Second
@@ -208,8 +217,11 @@ func (c *Client) readPump() {
 				if l, ok := msg["turn_limit"].(float64); ok {
 					turnLimit = time.Duration(l) * time.Second
 				}
+				if r, ok := msg["rule"].(string); ok {
+					rule = engine.GameRule(r)
+				}
 
-				code, _ := c.rm.createRoom(c, totalTime, increment, turnLimit)
+				code, _ := c.rm.createRoom(c, totalTime, increment, turnLimit, rule)
 				resp, _ := json.Marshal(map[string]interface{}{
 					"type":       "ROOM_CREATED",
 					"code":       code,

@@ -71,15 +71,12 @@ func (s *SQLiteStore) initSchema() error {
 }
 
 func (s *SQLiteStore) GetUser(id string) (*db.User, error) {
-	query := `SELECT id, elo, games_played, wins, losses, draws FROM users WHERE id = ?`
+	query := `SELECT id, elo, games_played, wins, losses, draws, coins FROM users WHERE id = ?`
 	row := s.db.QueryRow(query, id)
 
 	var user db.User
-	err := row.Scan(&user.ID, &user.ELO, &user.GamesPlayed, &user.Wins, &user.Losses, &user.Draws)
+	err := row.Scan(&user.ID, &user.ELO, &user.GamesPlayed, &user.Wins, &user.Losses, &user.Draws, &user.Coins)
 	if err == sql.ErrNoRows {
-		// Create user if not exists? For now, yes, to mimic MockRepo behavior
-		// In real app, proper signup is needed.
-		// But for transition, auto-create.
 		return s.createUser(id)
 	}
 	if err != nil {
@@ -98,9 +95,9 @@ func (s *SQLiteStore) createUser(id string) (*db.User, error) {
 }
 
 func (s *SQLiteStore) SaveUser(u *db.User) error {
-	query := `INSERT INTO users (id, elo, wins, losses, draws) VALUES (?, ?, ?, ?, ?) 
-              ON CONFLICT(id) DO UPDATE SET elo=excluded.elo, wins=excluded.wins, losses=excluded.losses, draws=excluded.draws`
-	_, err := s.db.Exec(query, u.ID, u.ELO, u.Wins, u.Losses, u.Draws)
+	query := `INSERT INTO users (id, elo, wins, losses, draws, coins) VALUES (?, ?, ?, ?, ?, ?) 
+              ON CONFLICT(id) DO UPDATE SET elo=excluded.elo, wins=excluded.wins, losses=excluded.losses, draws=excluded.draws, coins=excluded.coins`
+	_, err := s.db.Exec(query, u.ID, u.ELO, u.Wins, u.Losses, u.Draws, u.Coins)
 	return err
 }
 

@@ -9,7 +9,7 @@ class MinimaxSolver {
 
   MinimaxSolver({required this.evaluator, required this.moveGenerator});
 
-  Position getBestMove(GameBoard board, Player player, {int depth = 2}) {
+  Position getBestMove(GameBoard board, Player player, {int depth = 2, GameRule rule = GameRule.standard}) {
     List<Position> possibleMoves = moveGenerator.generateMoves(board);
     
     if (possibleMoves.isEmpty) return const Position(x: 7, y: 7);
@@ -29,11 +29,7 @@ class MinimaxSolver {
     for (final move in possibleMoves) {
       board.cells[move.y][move.x] = Cell(position: move, owner: player);
       
-      // Use alpha-beta window from the start? 
-      // Yes, technically for the root node, alpha is -infinity, beta is +infinity.
-      // But we can update alpha as we find better scores.
-      
-      int score = _minimax(board, depth - 1, false, bestScore > -999999999 ? bestScore : -999999999, 999999999, player);
+      int score = _minimax(board, depth - 1, false, bestScore > -999999999 ? bestScore : -999999999, 999999999, player, rule);
       
       board.cells[move.y][move.x] = Cell(position: move); // Revert
       
@@ -46,16 +42,16 @@ class MinimaxSolver {
     return bestMove;
   }
 
-  int _minimax(GameBoard board, int depth, bool isMaximizing, int alpha, int beta, Player player) {
+  int _minimax(GameBoard board, int depth, bool isMaximizing, int alpha, int beta, Player player, GameRule rule) {
     if (depth == 0) {
-      return evaluator.evaluate(board, player);
+      return evaluator.evaluate(board, player, rule);
     }
     
     final opponent = player == Player.x ? Player.o : Player.x;
     final currentPlayer = isMaximizing ? player : opponent;
 
     List<Position> possibleMoves = moveGenerator.generateMoves(board);
-    if (possibleMoves.isEmpty) return evaluator.evaluate(board, player);
+    if (possibleMoves.isEmpty) return evaluator.evaluate(board, player, rule);
 
     // Sort moves to prioritize center (better for pruning)
     final center = Position(x: board.columns ~/ 2, y: board.rows ~/ 2);
@@ -69,7 +65,7 @@ class MinimaxSolver {
       int maxEval = -999999999;
       for (final move in possibleMoves) {
         board.cells[move.y][move.x] = Cell(position: move, owner: currentPlayer);
-        int eval = _minimax(board, depth - 1, false, alpha, beta, player);
+        int eval = _minimax(board, depth - 1, false, alpha, beta, player, rule);
         board.cells[move.y][move.x] = Cell(position: move);
         
         maxEval = max(maxEval, eval);
@@ -81,7 +77,7 @@ class MinimaxSolver {
       int minEval = 999999999;
       for (final move in possibleMoves) {
         board.cells[move.y][move.x] = Cell(position: move, owner: currentPlayer);
-        int eval = _minimax(board, depth - 1, true, alpha, beta, player);
+        int eval = _minimax(board, depth - 1, true, alpha, beta, player, rule);
         board.cells[move.y][move.x] = Cell(position: move);
         
         minEval = min(minEval, eval);

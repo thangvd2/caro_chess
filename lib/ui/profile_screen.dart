@@ -65,10 +65,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: const EdgeInsets.all(24.0),
         child: Column(
           children: [
-            const CircleAvatar(
-              radius: 50,
-              child: Icon(Icons.person, size: 50),
-            ),
+            _buildAvatar(context),
             const SizedBox(height: 16),
             Text(
               _profile.id,
@@ -88,6 +85,111 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
+
+  Widget _buildAvatar(BuildContext context) {
+      final inventory = context.select((GameBloc bloc) => bloc.state.inventory);
+      final frameId = inventory?.equippedAvatarFrameId;
+      
+      Widget avatar = const CircleAvatar(
+          radius: 50,
+          child: Icon(Icons.person, size: 50),
+      );
+
+      BoxDecoration? decoration;
+
+      switch (frameId) {
+        case 'gold_avatar':
+          decoration = const BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(colors: [Colors.amber, Colors.yellowAccent, Colors.amber]),
+            boxShadow: [BoxShadow(color: Colors.amber, blurRadius: 10, spreadRadius: 2)],
+          );
+          break;
+        case 'avatar_diamond':
+          decoration = BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: const LinearGradient(colors: [Colors.cyanAccent, Colors.white, Colors.blueAccent]),
+            boxShadow: [BoxShadow(color: Colors.cyanAccent.withOpacity(0.6), blurRadius: 12, spreadRadius: 3)],
+            border: Border.all(color: Colors.white, width: 2),
+          );
+          break;
+        case 'avatar_rainbow':
+          decoration = BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: const LinearGradient(colors: [Colors.red, Colors.orange, Colors.yellow, Colors.green, Colors.blue, Colors.purple]),
+            boxShadow: [BoxShadow(color: Colors.purple.withOpacity(0.5), blurRadius: 10, spreadRadius: 2)],
+          );
+          break;
+        case 'avatar_fire':
+          decoration = BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(colors: [Colors.red.shade900, Colors.orange, Colors.yellow]),
+            boxShadow: [BoxShadow(color: Colors.orange.withOpacity(0.8), blurRadius: 15, spreadRadius: 1)],
+          );
+          break;
+        case 'avatar_ice':
+          decoration = BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: const LinearGradient(colors: [Colors.white, Colors.cyan, Colors.blue]),
+            boxShadow: [BoxShadow(color: Colors.cyanAccent.withOpacity(0.6), blurRadius: 10, spreadRadius: 2)],
+          );
+          break;
+        case 'avatar_nature':
+          decoration = BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(colors: [Colors.green.shade900, Colors.lightGreenAccent]),
+            border: Border.all(color: Colors.brown, width: 3),
+          );
+          break;
+        case 'avatar_tech':
+          decoration = BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.black,
+            border: Border.all(color: Colors.cyanAccent, width: 2),
+            boxShadow: [BoxShadow(color: Colors.cyan.withOpacity(0.4), blurRadius: 8, spreadRadius: 1)],
+          );
+          break;
+        case 'avatar_royal':
+          decoration = const BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(colors: [Colors.deepPurple, Colors.purpleAccent, Colors.amber]),
+            boxShadow: [BoxShadow(color: Colors.purple, blurRadius: 12, spreadRadius: 2)],
+          );
+          break;
+        case 'avatar_mystic':
+          decoration = BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: const LinearGradient(colors: [Colors.indigo, Colors.pink]),
+            boxShadow: [BoxShadow(color: Colors.indigoAccent.withOpacity(0.5), blurRadius: 10)],
+          );
+          break;
+        case 'avatar_cyber':
+          decoration = BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.grey.shade900,
+            border: Border.all(color: Colors.greenAccent, width: 2),
+            boxShadow: [BoxShadow(color: Colors.greenAccent.withOpacity(0.5), blurRadius: 10)],
+          );
+          break;
+        case 'avatar_pixel':
+          decoration = BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white,
+            border: Border.all(color: Colors.black, width: 4), // Bold black outline
+          );
+          break;
+      }
+
+      if (decoration != null) {
+          return Container(
+              padding: const EdgeInsets.all(4),
+              decoration: decoration,
+              child: avatar,
+          );
+      }
+      return avatar;
+  }
+
 }
 
 class _TierBadge extends StatelessWidget {

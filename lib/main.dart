@@ -33,8 +33,31 @@ class CaroChessApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Caro Chess',
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Colors.deepPurple,
+            brightness: Brightness.dark,
+            surface: const Color(0xFF1E1E2C), // Dark blue-grey surface
+            onSurface: Colors.white,
+          ),
+          scaffoldBackgroundColor: const Color(0xFF121212), // Almost black
           useMaterial3: true,
+          
+          // Elevate buttons a bit
+          elevatedButtonTheme: ElevatedButtonThemeData(
+             style: ElevatedButton.styleFrom(
+               elevation: 4,
+               shadowColor: Colors.deepPurple.withOpacity(0.5),
+               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+               backgroundColor: Colors.deepPurple.shade700,
+               foregroundColor: Colors.white,
+             ),
+          ),
+          
+          dialogTheme: const DialogThemeData(
+             backgroundColor: Color(0xFF1E1E2C),
+             surfaceTintColor: Colors.transparent,
+          ),
         ),
         home: const AppContent(),
       ),

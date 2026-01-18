@@ -182,51 +182,106 @@ class _GameControlsWidgetState extends State<GameControlsWidget> {
 
         return Column(
           children: [
-            Text(statusText, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
+            // Status Pill
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: Colors.white12),
+              ),
+              child: Text(
+                statusText,
+                style: const TextStyle(
+                  fontSize: 20, 
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.0,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            
             if (state is GameInProgress && state.mode == GameMode.online) ...[
                 Row(
                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                    children: [
-                      PlayerTimerWidget(
-                          label: "Player X",
-                          timeRemaining: state.timeRemainingX,
-                          isActive: state.currentPlayer == Player.x,
-                          turnTimeRemaining: state.currentPlayer == Player.x ? state.currentTurnTimeRemaining : null,
+                      Expanded(
+                        child: PlayerTimerWidget(
+                            label: "Player X",
+                            timeRemaining: state.timeRemainingX,
+                            isActive: state.currentPlayer == Player.x,
+                            turnTimeRemaining: state.currentPlayer == Player.x ? state.currentTurnTimeRemaining : null,
+                        ),
                       ),
-                      PlayerTimerWidget(
-                          label: "Player O",
-                          timeRemaining: state.timeRemainingO,
-                          isActive: state.currentPlayer == Player.o,
-                          turnTimeRemaining: state.currentPlayer == Player.o ? state.currentTurnTimeRemaining : null,
+                      const SizedBox(width: 8), // Replaced spaceEvenly spacing logic with explicit spacing
+                      Expanded(
+                        child: PlayerTimerWidget(
+                            label: "Player O",
+                            timeRemaining: state.timeRemainingO,
+                            isActive: state.currentPlayer == Player.o,
+                            turnTimeRemaining: state.currentPlayer == Player.o ? state.currentTurnTimeRemaining : null,
+                        ),
                       ),
-
                    ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 20),
             ],
+            
+            // Game Actions (Undo/Redo)
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-
               children: [
-                ElevatedButton(onPressed: onUndo, child: const Text('Undo')),
-                const SizedBox(width: 16),
-                ElevatedButton(onPressed: onRedo, child: const Text('Redo')),
+                if (onUndo != null)
+                   Padding(
+                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                     child: ElevatedButton.icon(
+                        icon: const Icon(Icons.undo, size: 20),
+                        label: const Text('Undo'),
+                        onPressed: onUndo,
+                        style: ElevatedButton.styleFrom(
+                           backgroundColor: Colors.white10,
+                           foregroundColor: Colors.white70,
+                           elevation: 0,
+                        ),
+                     ),
+                   ),
+                if (onRedo != null)
+                   Padding(
+                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                     child: ElevatedButton.icon(
+                        icon: const Icon(Icons.redo, size: 20),
+                        label: const Text('Redo'),
+                        onPressed: onRedo,
+                        style: ElevatedButton.styleFrom(
+                           backgroundColor: Colors.white10,
+                           foregroundColor: Colors.white70,
+                           elevation: 0,
+                        ),
+                     ),
+                   ),
               ],
             ),
-            const SizedBox(height: 8),
+            
+            const SizedBox(height: 12),
+            
+            // Match Actions (Exit / New Game / Leave)
             if ((state is GameInProgress && state.mode != GameMode.online) || 
                 (state is GameOver && state.mode != GameMode.online)) ...[
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                       backgroundColor: Colors.redAccent.withOpacity(0.8),
+                       foregroundColor: Colors.white,
+                    ),
                     onPressed: onReset, 
-                    child: const Text('Exit', style: TextStyle(color: Colors.white)),
+                    icon: const Icon(Icons.exit_to_app, size: 20),
+                    label: const Text('Exit'),
                   ),
                   const SizedBox(width: 16),
-                  ElevatedButton(
+                  ElevatedButton.icon(
                     onPressed: () {
                       if (state is GameInProgress) {
                         context.read<GameBloc>().add(StartGame(
@@ -242,14 +297,25 @@ class _GameControlsWidgetState extends State<GameControlsWidget> {
                         ));
                       }
                     },
-                    child: const Text('New Game'),
+                    style: ElevatedButton.styleFrom(
+                       backgroundColor: Colors.deepPurpleAccent,
+                       foregroundColor: Colors.white,
+                    ),
+                    icon: const Icon(Icons.refresh, size: 20),
+                    label: const Text('New Game'),
                   ),
                 ],
               ),
             ] else ...[
-              ElevatedButton(onPressed: onReset, child: const Text(
-                'Leave Room' // Online
-              )),
+              ElevatedButton.icon(
+                onPressed: onReset, 
+                style: ElevatedButton.styleFrom(
+                   backgroundColor: Colors.redAccent.withOpacity(0.8),
+                   foregroundColor: Colors.white,
+                ),
+                icon: const Icon(Icons.close, size: 20),
+                label: const Text('Leave Room'),
+              ),
             ],
           ],
         );
