@@ -42,3 +42,6 @@
 
 ## [x] Track: Auth & Multiplayer UX Improvements
 *Link: [conductor/tracks/auth_multiplayer_20260115/plan.md](conductor/tracks/auth_multiplayer_20260115/plan.md)*
+
+## [x] Track: Monetization (Ads & IAP)
+*Link: [conductor/tracks/monetization_20260119/plan.md](conductor/tracks/monetization_20260119/plan.md)*

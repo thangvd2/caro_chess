@@ -111,9 +111,34 @@ class GameRepository {
 
   Future<void> logout() async {
     await _authService.logout();
-    await clearGame(); // Optional: clear local game state too? Maybe not inventory but current game?
-    // Let's keep inventory for now in case they re-login (though guest ID is lost).
-    // Actually, if it's a guest ID and we lose it, inventory is effectively gone/inaccessible unless on server.
-    // So clearing game state is fine.
+    await clearGame(); 
+  }
+
+  // Ad Persistence
+  static const String _adGamesPlayedKey = 'ad_games_played';
+  static const String _adPendingKey = 'ad_pending';
+  static const String _isPremiumKey = 'is_premium';
+
+  Future<void> saveAdState({required int gamesPlayed, required bool isPending}) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_adGamesPlayedKey, gamesPlayed);
+    await prefs.setBool(_adPendingKey, isPending);
+  }
+
+  Future<Map<String, dynamic>> loadAdState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final gamesPlayed = prefs.getInt(_adGamesPlayedKey) ?? 0;
+    final isPending = prefs.getBool(_adPendingKey) ?? false;
+    return {'gamesPlayed': gamesPlayed, 'isPending': isPending};
+  }
+
+  Future<void> savePremiumStatus(bool isPremium) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_isPremiumKey, isPremium);
+  }
+
+  Future<bool> loadPremiumStatus() async {
+     final prefs = await SharedPreferences.getInstance();
+     return prefs.getBool(_isPremiumKey) ?? false;
   }
 }
